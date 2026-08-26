@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import AdminSidebar from '../components/AdminSidebar';
-import { FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiPlus, FiTrash2 } from 'react-icons/fi';
 
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const { userInfo } = useSelector((state) => state.user);
+  const location = useLocation();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await axios.get('http://localhost:5000/api/products');
+        const { data } = await axios.get('http://localhost:5000/api/products/my-products', {
+          headers: { Authorization: `Bearer ${userInfo.token}` },
+        });
         setProducts(data);
       } catch (err) {
         setError(err.response?.data?.message || err.message);
@@ -25,7 +29,24 @@ const AdminProducts = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, [userInfo.token]);
+
+  const deleteHandler = async (productId) => {
+    if (!window.confirm('Delete this product? This action cannot be undone.')) return;
+
+    setDeletingId(productId);
+    setError(null);
+    try {
+      await axios.delete(`http://localhost:5000/api/products/${productId}`, {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
+      setProducts((currentProducts) => currentProducts.filter((product) => product._id !== productId));
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -68,6 +89,11 @@ const AdminProducts = () => {
 
         {/* Content Area */}
         <div className="p-4 sm:p-6 lg:p-8">
+          {location.state?.success && (
+            <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded mb-6 text-sm">
+              {location.state.success}
+            </div>
+          )}
           {error ? (
             <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6 text-sm flex items-start">
               <span>Failed to load products: {error}</span>
@@ -105,6 +131,12 @@ const AdminProducts = () => {
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Status
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -154,6 +186,29 @@ const AdminProducts = () => {
                           >
                             {product.countInStock > 0 ? 'In Stock' : 'Out of Stock'}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                          {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end items-center gap-2">
+                            <Link
+                              to={`/admin/products/edit/${product._id}`}
+                              title="Edit product"
+                              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            >
+                              <FiEdit2 size={18} />
+                            </Link>
+                            <button
+                              type="button"
+                              title="Delete product"
+                              onClick={() => deleteHandler(product._id)}
+                              disabled={deletingId === product._id}
+                              className="p-2 text-red-600 hover:bg-red-50 disabled:opacity-50 rounded-lg transition-colors"
+                            >
+                              <FiTrash2 size={18} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

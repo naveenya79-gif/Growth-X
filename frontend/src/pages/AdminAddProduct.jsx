@@ -27,7 +27,7 @@ const AdminAddProduct = () => {
     setSuccess(false);
 
     // Validation
-    if (!name || !price || !image || !category || !brand || !countInStock === undefined || !description) {
+    if (!name.trim() || !price || !image.trim() || !category.trim() || !brand.trim() || countInStock === '' || !description.trim()) {
       setError("Please fill in all fields");
       return;
     }
@@ -35,12 +35,12 @@ const AdminAddProduct = () => {
     const priceNum = parseFloat(price);
     const stockNum = parseInt(countInStock);
 
-    if (priceNum < 0) {
+    if (!Number.isFinite(priceNum) || priceNum < 0) {
       setError("Price must be a positive number");
       return;
     }
 
-    if (stockNum < 0) {
+    if (!Number.isInteger(stockNum) || stockNum < 0) {
       setError("Stock quantity must be a positive number");
       return;
     }

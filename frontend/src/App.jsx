@@ -13,6 +13,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
 import AdminProducts from './pages/AdminProducts';
 import AdminAddProduct from './pages/AdminAddProduct';
+import AdminEditProduct from './pages/AdminEditProduct';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
           <Route path="/admin/dashboard" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
           <Route path="/admin/products" element={<PrivateRoute><AdminProducts /></PrivateRoute>} />
           <Route path="/admin/products/add" element={<PrivateRoute><AdminAddProduct /></PrivateRoute>} />
+          <Route path="/admin/products/edit/:id" element={<PrivateRoute><AdminEditProduct /></PrivateRoute>} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Routes>
       </main>
