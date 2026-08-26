@@ -1,11 +1,11 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const connectDB = require('./config/db');
-const User = require('./models/User');
-const Product = require('./models/Product');
-const Order = require('./models/Order');
-const Payment = require('./models/Payment');
-const products = require('./data/products');
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const connectDB = require("./config/db");
+const User = require("./models/User");
+const Product = require("./models/Product");
+const Order = require("./models/Order");
+const Payment = require("./models/Payment");
+const productsData = require("./data/products");
 
 dotenv.config();
 connectDB();
@@ -18,13 +18,31 @@ const importData = async () => {
     await Payment.deleteMany();
 
     const createdUsers = await User.insertMany([
-      { name: 'Admin User', email: 'admin@example.com', password: 'password123', isAdmin: true },
-      { name: 'John Doe', email: 'john@example.com', password: 'password123', isAdmin: false }
+      {
+        name: "Admin User",
+        email: "admin@example.com",
+        password: "password123",
+        isAdmin: true,
+      },
+      {
+        name: "John Doe",
+        email: "john@example.com",
+        password: "password123",
+        isAdmin: false,
+      },
     ]);
 
-    await Product.insertMany(products);
+    // Add sellerId and brand to products
+    const productsWithSellerId = productsData.map((product) => ({
+      ...product,
+      brand: product.brand || "Generic",
+      status: product.status || "Active",
+      sellerId: createdUsers[0]._id, // Assign to admin user
+    }));
 
-    console.log('Data Imported!');
+    await Product.insertMany(productsWithSellerId);
+
+    console.log("Data Imported!");
     process.exit();
   } catch (error) {
     console.error(`Error: ${error.message}`);
@@ -32,7 +50,7 @@ const importData = async () => {
   }
 };
 
-if (process.argv[2] === '-d') {
+if (process.argv[2] === "-d") {
   // destroy data logic if needed
 } else {
   importData();
