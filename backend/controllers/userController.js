@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Product = require('../models/Product');
 const generateToken = require('../utils/generateToken');
 
 // @desc    Auth user & get token
@@ -77,5 +78,47 @@ const authAdmin = async (req, res) => {
   }
 };
 
-module.exports = { authUser, registerUser, authAdmin };
+// @desc    Get admin/seller dashboard statistics
+// @route   GET /api/admin/dashboard
+// @access  Private/Admin
+const getDashboardStats = async (req, res) => {
+  try {
+    // Get authenticated seller/admin from token
+    const seller = await User.findById(req.user._id).select('-password');
+    
+    if (!seller) {
+      return res.status(404).json({ message: 'Seller not found' });
+    }
+
+    // Calculate product statistics
+    const totalProducts = await Product.countDocuments();
+    const activeProducts = await Product.countDocuments({ countInStock: { $gt: 0 } });
+    const outOfStockProducts = await Product.countDocuments({ countInStock: 0 });
+
+    // Get recent products (last 5)
+    const recentProducts = await Product.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('name price countInStock category image');
+
+    res.json({
+      seller: {
+        _id: seller._id,
+        name: seller.name,
+        email: seller.email,
+        isAdmin: seller.isAdmin,
+      },
+      statistics: {
+        totalProducts,
+        activeProducts,
+        outOfStockProducts,
+      },
+      recentProducts,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching dashboard statistics' });
+  }
+};
+
+module.exports = { authUser, registerUser, authAdmin, getDashboardStats };
 
