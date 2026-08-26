@@ -5,6 +5,7 @@ import axios from 'axios';
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -12,7 +13,7 @@ const Home = () => {
         const { data } = await axios.get('http://localhost:5000/api/products');
         setProducts(data);
       } catch (error) {
-        console.error(error);
+        setError(error.response?.data?.message || 'Unable to load products. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -22,6 +23,10 @@ const Home = () => {
 
   if (loading) {
     return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+  }
+
+  if (error) {
+    return <div className="py-16 text-center text-red-600">{error}</div>;
   }
 
   return (
@@ -39,6 +44,11 @@ const Home = () => {
               <Link to={`/product/${product._id}`}>
                 <h3 className="text-lg font-semibold text-gray-800 hover:text-indigo-600 truncate">{product.name}</h3>
               </Link>
+              <p className="mt-2 text-sm text-gray-600 line-clamp-2">{product.description}</p>
+              <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                <span>{product.category}</span>
+                <span>{product.countInStock} available</span>
+              </div>
               <div className="mt-2 flex items-center justify-between">
                 <span className="text-2xl font-bold text-gray-900">${product.price.toFixed(2)}</span>
                 <span className={`text-sm px-2 py-1 rounded ${product.countInStock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -48,7 +58,7 @@ const Home = () => {
             </div>
           </div>
         ))}
-        {products.length === 0 && <div className="col-span-full text-center text-gray-500">No products found. (Run the seeder or add via admin dashboard)</div>}
+        {products.length === 0 && <div className="col-span-full text-center text-gray-500">No products available.</div>}
       </div>
     </div>
   );

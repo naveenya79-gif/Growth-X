@@ -25,7 +25,9 @@ const validateProductData = (data) => {
 // @route   GET /api/products
 // @access  Public
 const getProducts = async (req, res) => {
-  const products = await Product.find({});
+  const products = await Product.find({ status: 'Active', countInStock: { $gt: 0 } })
+    .select('-sellerId')
+    .sort({ createdAt: -1 });
   res.json(products);
 };
 
@@ -33,7 +35,11 @@ const getProducts = async (req, res) => {
 // @route   GET /api/products/:id
 // @access  Public
 const getProductById = async (req, res) => {
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findOne({
+    _id: req.params.id,
+    status: 'Active',
+    countInStock: { $gt: 0 }
+  }).select('-sellerId');
   if (product) {
     res.json(product);
   } else {
