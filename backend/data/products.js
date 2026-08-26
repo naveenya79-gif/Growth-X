@@ -1,0 +1,76 @@
+const products = [
+  {
+    name: 'Apple iPhone 15 Pro (Titanium, 256 GB)',
+    image: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?q=80&w=1000&auto=format&fit=crop',
+    description: 'Forged in titanium and featuring the groundbreaking A17 Pro chip, a customizable Action button, and a more versatile Pro camera system.',
+    category: 'Mobiles',
+    price: 1099.99,
+    countInStock: 15,
+  },
+  {
+    name: 'Samsung Galaxy S24 Ultra',
+    image: 'https://images.unsplash.com/photo-1707028169135-26330089dbbc?q=80&w=1000&auto=format&fit=crop',
+    description: 'Welcome to the era of mobile AI. With Galaxy S24 Ultra in your hands, you can unleash whole new levels of creativity, productivity and possibility.',
+    category: 'Mobiles',
+    price: 1299.99,
+    countInStock: 8,
+  },
+  {
+    name: 'Smart Watch Series 7',
+    image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=1000&auto=format&fit=crop',
+    description: 'The latest smart watch with health tracking, blood oxygen app, and seamless connectivity.',
+    category: 'Watches',
+    price: 399.99,
+    countInStock: 7,
+  },
+  {
+    name: 'Nike Air Max 270',
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1000&auto=format&fit=crop',
+    description: 'Boasting the first-ever Max Air unit created specifically for Nike Sportswear, the Nike Air Max 270 delivers visible air under every step.',
+    category: 'Shoes',
+    price: 150.00,
+    countInStock: 20,
+  },
+  {
+    name: 'Puma Men\'s Running Shoes',
+    image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=1000&auto=format&fit=crop',
+    description: 'Experience lightweight performance and superior cushioning with these modern running shoes.',
+    category: 'Shoes',
+    price: 85.99,
+    countInStock: 12,
+  },
+  {
+    name: 'Wireless Bluetooth Headphones',
+    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000&auto=format&fit=crop',
+    description: 'High quality wireless bluetooth headphones with active noise cancellation and 30-hour battery life.',
+    category: 'Electronics',
+    price: 89.99,
+    countInStock: 10,
+  },
+  {
+    name: 'Minimalist Leather Wallet',
+    image: 'https://images.unsplash.com/photo-1627123424574-724758594e93?q=80&w=1000&auto=format&fit=crop',
+    description: 'Genuine leather wallet with RFID blocking technology and multiple card slots.',
+    category: 'Accessories',
+    price: 45.00,
+    countInStock: 25,
+  },
+  {
+    name: 'Sony Alpha a7 III Mirrorless Camera',
+    image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1000&auto=format&fit=crop',
+    description: 'Advanced 24.2MP BSI Full-frame Image Sensor with 1.8X readout speed. Capture life moments with professional grade quality.',
+    category: 'Photography',
+    price: 1999.99,
+    countInStock: 3,
+  },
+  {
+    name: 'Titan Analog Men\'s Watch',
+    image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=1000&auto=format&fit=crop',
+    description: 'Classic and sophisticated. This analog watch features a premium leather strap and water resistance.',
+    category: 'Watches',
+    price: 120.00,
+    countInStock: 18,
+  }
+];
+
+module.exports = products;
