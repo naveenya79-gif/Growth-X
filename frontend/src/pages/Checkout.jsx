@@ -53,7 +53,11 @@ const Checkout = () => {
       });
       
       if (data.paymentStatus === 'Success') {
+        const primaryProductId = cartItems[0]?.product || cartItems[0]?._id;
         dispatch(clearCart());
+        if (primaryProductId) {
+          navigate(`/post-purchase/${primaryProductId}`);
+        }
       }
 
     } catch (error) {
