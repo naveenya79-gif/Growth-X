@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../redux/slices/cartSlice';
 import axios from 'axios';
+import OrderSuccessHeader from '../components/OrderSuccessHeader';
 
 const PostPurchase = () => {
   const { productId } = useParams();
@@ -63,18 +64,8 @@ const PostPurchase = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-12 text-center">
-      {/* Order Confirmed Banner */}
-      <div className="bg-green-50 border border-green-200 p-8 rounded-xl shadow-sm mb-8">
-        <h1 className="text-4xl font-extrabold text-green-800 mb-4">Order Confirmed!</h1>
-        <p className="text-xl text-green-700">
-          Thank you for your purchase. Your order is being processed.
-        </p>
-        {purchasedProduct?.name && (
-          <p className="mt-2 text-md font-medium text-green-900">
-            Purchased Item: <span className="font-bold">{purchasedProduct.name}</span>
-          </p>
-        )}
-      </div>
+      {/* Premium Order Confirmed Banner */}
+      <OrderSuccessHeader purchasedProduct={purchasedProduct} />
 
       {/* Recommendation Section */}
       <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mt-8">
