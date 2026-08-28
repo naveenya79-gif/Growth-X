@@ -174,7 +174,7 @@ const getProductRecommendations = async (req, res) => {
       ]
     };
     
-    if (purchasedProduct.tags && purchasedProduct.tags.length > 0) {
+    if (Array.isArray(purchasedProduct.tags) && purchasedProduct.tags.length > 0) {
       query.$or.push({ tags: { $in: purchasedProduct.tags } });
     }
 
@@ -191,7 +191,7 @@ const getProductRecommendations = async (req, res) => {
       if (product.brand === purchasedProduct.brand) score += 3;
 
       // Each matching tag = +2
-      if (purchasedProduct.tags && product.tags) {
+      if (Array.isArray(purchasedProduct.tags) && Array.isArray(product.tags)) {
         const matchingTags = purchasedProduct.tags.filter(tag => product.tags.includes(tag));
         score += (matchingTags.length * 2);
       }
