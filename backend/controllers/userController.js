@@ -90,13 +90,14 @@ const getDashboardStats = async (req, res) => {
       return res.status(404).json({ message: 'Seller not found' });
     }
 
-    // Calculate product statistics
-    const totalProducts = await Product.countDocuments();
-    const activeProducts = await Product.countDocuments({ countInStock: { $gt: 0 } });
-    const outOfStockProducts = await Product.countDocuments({ countInStock: 0 });
+    // Calculate statistics only for products owned by the authenticated seller
+    const sellerFilter = { sellerId: req.user._id };
+    const totalProducts = await Product.countDocuments(sellerFilter);
+    const activeProducts = await Product.countDocuments({ ...sellerFilter, countInStock: { $gt: 0 } });
+    const outOfStockProducts = await Product.countDocuments({ ...sellerFilter, countInStock: 0 });
 
     // Get recent products (last 5)
-    const recentProducts = await Product.find()
+    const recentProducts = await Product.find(sellerFilter)
       .sort({ createdAt: -1 })
       .limit(5)
       .select('name price countInStock category image');

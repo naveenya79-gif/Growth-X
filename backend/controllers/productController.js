@@ -35,15 +35,21 @@ const getProducts = async (req, res) => {
 // @route   GET /api/products/:id
 // @access  Public
 const getProductById = async (req, res) => {
-  const product = await Product.findOne({
-    _id: req.params.id,
-    status: 'Active',
-    countInStock: { $gt: 0 }
-  }).select('-sellerId');
-  if (product) {
-    res.json(product);
-  } else {
-    res.status(404).json({ message: 'Product not found' });
+  try {
+    const product = await Product.findOne({
+      _id: req.params.id,
+      status: 'Active',
+      countInStock: { $gt: 0 }
+    }).select('-sellerId');
+    if (product) {
+      return res.json(product);
+    }
+    return res.status(404).json({ message: 'Product not found' });
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    return res.status(500).json({ message: 'Error fetching product' });
   }
 };
 
