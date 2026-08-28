@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { addToCart } from '../redux/slices/cartSlice';
 import axios from 'axios';
 
 const PostPurchase = () => {
   const { productId } = useParams();
+  const dispatch = useDispatch();
+  const { cartItems } = useSelector((state) => state.cart);
+
   const [purchasedProduct, setPurchasedProduct] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [addedMap, setAddedMap] = useState({});
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -33,6 +39,27 @@ const PostPurchase = () => {
 
     fetchRecommendations();
   }, [productId]);
+
+  const handleAddToCart = (item) => {
+    const existItem = cartItems.find((x) => x.product === item._id);
+    const currentQty = existItem ? existItem.qty : 0;
+    const stockLimit = item.countInStock !== undefined ? item.countInStock : 10;
+    const newQty = Math.min(currentQty + 1, stockLimit);
+
+    dispatch(
+      addToCart({
+        ...item,
+        product: item._id,
+        qty: newQty,
+        countInStock: stockLimit,
+      })
+    );
+
+    setAddedMap((prev) => ({ ...prev, [item._id]: true }));
+    setTimeout(() => {
+      setAddedMap((prev) => ({ ...prev, [item._id]: false }));
+    }, 2500);
+  };
 
   return (
     <div className="max-w-4xl mx-auto py-12 text-center">
@@ -79,37 +106,56 @@ const PostPurchase = () => {
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
-                {recommendations.map((item) => (
-                  <div
-                    key={item._id}
-                    className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow p-4 bg-white flex flex-col justify-between"
-                  >
-                    <div>
-                      <img
-                        src={item.image || 'https://via.placeholder.com/300x200?text=Product'}
-                        alt={item.name}
-                        className="w-full h-40 object-cover rounded mb-3"
-                      />
-                      <h3 className="font-semibold text-gray-900 truncate mb-1" title={item.name}>
-                        {item.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 mb-2">
-                        Brand: <span className="font-medium text-gray-700">{item.brand || 'N/A'}</span>
-                      </p>
-                    </div>
+                {recommendations.map((item) => {
+                  const isOutOfStock = item.countInStock === 0;
+                  const isAdded = addedMap[item._id];
 
-                    <div>
-                      <div className="flex items-center justify-between mt-3 text-sm">
-                        <span className="font-bold text-indigo-600 text-lg">
-                          ${typeof item.price === 'number' ? item.price.toFixed(2) : item.price}
-                        </span>
-                        <span className="text-yellow-500 font-semibold text-sm">
-                          ★ {item.rating || 0}
-                        </span>
+                  return (
+                    <div
+                      key={item._id}
+                      className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow p-4 bg-white flex flex-col justify-between"
+                    >
+                      <div>
+                        <img
+                          src={item.image || 'https://via.placeholder.com/300x200?text=Product'}
+                          alt={item.name}
+                          className="w-full h-40 object-cover rounded mb-3"
+                        />
+                        <h3 className="font-semibold text-gray-900 truncate mb-1" title={item.name}>
+                          {item.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 mb-2">
+                          Brand: <span className="font-medium text-gray-700">{item.brand || 'N/A'}</span>
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mt-3 text-sm">
+                          <span className="font-bold text-indigo-600 text-lg">
+                            ${typeof item.price === 'number' ? item.price.toFixed(2) : item.price}
+                          </span>
+                          <span className="text-yellow-500 font-semibold text-sm">
+                            ★ {item.rating || 0}
+                          </span>
+                        </div>
+
+                        <button
+                          onClick={() => handleAddToCart(item)}
+                          disabled={isOutOfStock}
+                          className={`w-full font-medium py-2 px-4 rounded text-sm transition-all mt-3 shadow-sm ${
+                            isOutOfStock
+                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              : isAdded
+                              ? 'bg-green-600 text-white'
+                              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                          }`}
+                        >
+                          {isOutOfStock ? 'Out of Stock' : isAdded ? '✓ Added to Cart' : 'Add to Cart'}
+                        </button>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
