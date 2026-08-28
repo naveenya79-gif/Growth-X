@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../redux/slices/cartSlice';
+import { FaArrowLeft, FaShoppingCart } from 'react-icons/fa';
 import axios from 'axios';
 import OrderSuccessHeader from '../components/OrderSuccessHeader';
 import CompleteRoutine from '../components/CompleteRoutine';
@@ -78,17 +79,21 @@ const PostPurchase = () => {
         onRetry={fetchRecommendations}
       />
 
+      {/* Footer Navigation Buttons */}
       <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link
           to="/"
-          className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 text-indigo-600 hover:text-indigo-800 font-bold text-sm sm:text-base transition-all py-3 px-6 rounded-xl border border-indigo-100 hover:border-indigo-200 bg-white shadow-sm"
+          className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-sm sm:text-base py-3 px-6 rounded-xl shadow-md shadow-indigo-200 hover:shadow-indigo-300 transition-all duration-300"
         >
-          <span>&larr; Return to Home</span>
+          <FaArrowLeft className="text-xs" />
+          <span>Continue Shopping</span>
         </Link>
+
         <Link
           to="/cart"
-          className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 text-gray-700 hover:text-gray-900 font-bold text-sm sm:text-base transition-all py-3 px-6 rounded-xl border border-gray-200 hover:border-gray-300 bg-gray-50 shadow-sm"
+          className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 active:scale-95 font-bold text-sm sm:text-base py-3 px-6 rounded-xl border border-gray-200 hover:border-gray-300 shadow-sm transition-all duration-300"
         >
+          <FaShoppingCart className="text-xs text-gray-500" />
           <span>View Shopping Cart</span>
         </Link>
       </div>
