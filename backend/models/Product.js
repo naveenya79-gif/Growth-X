@@ -37,6 +37,14 @@ const productSchema = new mongoose.Schema(
       enum: ["Active", "Inactive"],
       default: "Active",
     },
+    tags: {
+      type: [String],
+      default: [],
+    },
+    rating: {
+      type: Number,
+      default: 0,
+    },
     sellerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

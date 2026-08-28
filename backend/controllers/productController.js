@@ -1,8 +1,13 @@
 const Product = require('../models/Product');
 
 const validateProductData = (data) => {
-  const { name, description, price, category, brand, image, countInStock, status } = data;
+  const { name, description, price, category, brand, image, countInStock, status, tags, rating } = data;
   const errors = [];
+
+  const ratingValue = Number(rating || 0);
+  if (!Number.isFinite(ratingValue) || ratingValue < 0 || ratingValue > 5) errors.push('Rating must be a number between 0 and 5');
+
+  if (tags && !Array.isArray(tags)) errors.push('Tags must be an array');
 
   if (!name || name.trim().length < 2) errors.push('Product name must be at least 2 characters');
   if (!description || !description.trim()) errors.push('Description is required');
@@ -18,7 +23,7 @@ const validateProductData = (data) => {
 
   if (status !== 'Active' && status !== 'Inactive') errors.push('Status must be Active or Inactive');
 
-  return { errors, priceValue, stockValue };
+  return { errors, priceValue, stockValue, ratingValue, parsedTags: tags || [] };
 };
 
 // @desc    Fetch all products
@@ -58,14 +63,13 @@ const getProductById = async (req, res) => {
 // @access  Private/Admin
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, brand, image, countInStock, status } = req.body;
+    const { name, description, price, category, brand, image, countInStock, status, tags, rating } = req.body;
 
-    const { errors, priceValue, stockValue } = validateProductData({
-      name, description, price, category, brand, image, countInStock, status: status || 'Active'
+    const { errors, priceValue, stockValue, ratingValue, parsedTags } = validateProductData({
+      name, description, price, category, brand, image, countInStock, status: status || 'Active', tags, rating
     });
     if (errors.length) return res.status(400).json({ message: errors.join('. ') });
 
-    // Create product with sellerId from authenticated user
     const product = await Product.create({
       name,
       description,
@@ -75,6 +79,8 @@ const createProduct = async (req, res) => {
       image: image.trim(),
       countInStock: stockValue,
       status: status || 'Active',
+      tags: parsedTags,
+      rating: ratingValue,
       sellerId: req.user._id
     });
 
@@ -105,7 +111,7 @@ const updateProduct = async (req, res) => {
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
     const data = { ...product.toObject(), ...req.body };
-    const { errors, priceValue, stockValue } = validateProductData(data);
+    const { errors, priceValue, stockValue, ratingValue, parsedTags } = validateProductData(data);
     if (errors.length) return res.status(400).json({ message: errors.join('. ') });
 
     product.name = data.name.trim();
@@ -116,6 +122,8 @@ const updateProduct = async (req, res) => {
     product.image = data.image.trim();
     product.countInStock = stockValue;
     product.status = data.status;
+    product.tags = parsedTags;
+    product.rating = ratingValue;
 
     const updatedProduct = await product.save();
     res.json(updatedProduct);
