@@ -14,6 +14,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminProducts from './pages/AdminProducts';
 import AdminAddProduct from './pages/AdminAddProduct';
 import AdminEditProduct from './pages/AdminEditProduct';
+import PostPurchase from './pages/PostPurchase';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/post-purchase/:productId" element={<PostPurchase />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
           <Route path="/admin/products" element={<PrivateRoute><AdminProducts /></PrivateRoute>} />
