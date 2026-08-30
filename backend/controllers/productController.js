@@ -30,10 +30,16 @@ const validateProductData = (data) => {
 // @route   GET /api/products
 // @access  Public
 const getProducts = async (req, res) => {
-  const products = await Product.find({ status: 'Active', countInStock: { $gt: 0 } })
-    .select('-sellerId')
-    .sort({ createdAt: -1 });
-  res.json(products);
+  try {
+    const products = await Product.find({ status: 'Active', countInStock: { $gt: 0 } })
+      .select('-sellerId')
+      .sort({ createdAt: -1 });
+    console.log('getProducts count:', products.length);
+    res.json(products);
+  } catch (error) {
+    console.error('getProducts error:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
 
 // @desc    Fetch single product

@@ -6,8 +6,7 @@ const connectDB = require('./config/db');
 // Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
+// Connect to database (done in startServer)
 
 const app = express();
 
@@ -33,6 +32,10 @@ app.get('/', (req, res) => {
   res.send('REVIVE API is running...');
 });
 
-const PORT = process.env.PORT || 5000;
+const startServer = async () => {
+  await connectDB();
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`));
+};
 
-app.listen(PORT, console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`));
+startServer();

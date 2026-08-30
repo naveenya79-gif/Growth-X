@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { clearCart } from '../redux/slices/cartSlice';
+import { addToCart, clearCart } from '../redux/slices/cartSlice';
+import RecommendationCard from '../components/RecommendationCard';
 import axios from 'axios';
 
 const Checkout = () => {
@@ -14,7 +15,56 @@ const Checkout = () => {
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
-  
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const [addedMap, setAddedMap] = useState({});
+
+  useEffect(() => {
+    const fetchRecs = async () => {
+      if (cartItems.length === 0) return;
+      const primaryItem = cartItems[0];
+      const targetId = primaryItem.product || primaryItem._id;
+      if (!targetId) return;
+
+      setLoadingRecs(true);
+      try {
+        const { data } = await axios.get(`http://localhost:5000/api/products/${targetId}/recommendations`);
+        if (data.success) {
+          const cartProductIds = new Set(cartItems.map((c) => c.product || c._id));
+          const filtered = (data.recommendations || []).filter((rec) => !cartProductIds.has(rec._id));
+          setRecommendations(filtered);
+        }
+      } catch (err) {
+        console.error('Error fetching checkout recommendations:', err);
+      } finally {
+        setLoadingRecs(false);
+      }
+    };
+
+    fetchRecs();
+  }, [cartItems]);
+
+  const handleAddRecToCart = (item) => {
+    const existItem = cartItems.find((x) => (x.product || x._id) === item._id);
+    const currentQty = existItem ? existItem.qty : 0;
+    const stockLimit = item.countInStock !== undefined ? item.countInStock : 10;
+    const newQty = Math.min(currentQty + 1, stockLimit);
+
+    dispatch(
+      addToCart({
+        ...item,
+        product: item._id,
+        qty: newQty,
+        countInStock: stockLimit,
+      })
+    );
+
+    setAddedMap((prev) => ({ ...prev, [item._id]: true }));
+    setTimeout(() => {
+      setAddedMap((prev) => ({ ...prev, [item._id]: false }));
+    }, 2500);
+  };
+
   if (!userInfo) {
     navigate('/login');
     return null;
@@ -36,6 +86,8 @@ const Checkout = () => {
         },
       };
 
+      const primaryProductId = cartItems[0]?.product || cartItems[0]?._id;
+
       const { data } = await axios.post(
         'http://localhost:5000/api/orders',
         {
@@ -45,20 +97,20 @@ const Checkout = () => {
         config
       );
 
+      if (data.paymentStatus === 'Success') {
+        dispatch(clearCart());
+        if (primaryProductId) {
+          navigate(`/post-purchase/${primaryProductId}`);
+          return;
+        }
+      }
+
       setResult({
         success: data.paymentStatus === 'Success',
         status: data.paymentStatus,
         reason: data.failureReason,
         orderId: data.order._id
       });
-      
-      if (data.paymentStatus === 'Success') {
-        const primaryProductId = cartItems[0]?.product || cartItems[0]?._id;
-        dispatch(clearCart());
-        if (primaryProductId) {
-          navigate(`/post-purchase/${primaryProductId}`);
-        }
-      }
 
     } catch (error) {
       setResult({
@@ -72,7 +124,7 @@ const Checkout = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div className="max-w-4xl mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
       
       {result && (
@@ -151,6 +203,35 @@ const Checkout = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* AI Recommendations Section on Checkout Page */}
+      {cartItems.length > 0 && !result && (
+        <div className="mt-12">
+          <div className="flex items-center space-x-2 mb-6">
+            <span className="text-indigo-600 text-xl font-bold">✨ Recommended Add-ons Before You Order</span>
+            <span className="text-xs text-gray-500 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full font-medium">Smart AI Suggestions</span>
+          </div>
+
+          {loadingRecs ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map((n) => (
+                <div key={n} className="h-64 bg-gray-100 animate-pulse rounded-2xl"></div>
+              ))}
+            </div>
+          ) : recommendations.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {recommendations.map((item) => (
+                <RecommendationCard
+                  key={item._id}
+                  item={item}
+                  isAdded={!!addedMap[item._id]}
+                  onAddToCart={handleAddRecToCart}
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
     </div>
