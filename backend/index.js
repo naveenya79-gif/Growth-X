@@ -20,12 +20,14 @@ const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const agentRoutes = require('./routes/agentRoutes');
 
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/revenue-risk', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/agent/catalog', agentRoutes);
 
 // Basic Route for testing
 app.get('/', (req, res) => {

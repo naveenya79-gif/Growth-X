@@ -242,7 +242,7 @@ const AdminDashboard = () => {
           {/* Seller Information Card */}
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Account Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-600">Seller Name</label>
                 <p className="mt-2 text-lg font-semibold text-gray-900">
@@ -260,6 +260,40 @@ const AdminDashboard = () => {
                 <p className="mt-2 text-lg font-semibold text-gray-900">
                   {stats?.seller?.isAdmin ? 'Admin/Seller' : 'Seller'}
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bounded Money Actions & Audit Trail Panel (Razorpay Track 01 Requirements) */}
+          <div className="bg-white rounded-lg shadow overflow-hidden border border-indigo-100">
+            <div className="bg-gradient-to-r from-slate-900 to-indigo-950 px-6 py-5 text-white flex justify-between items-center">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-yellow-400 font-bold text-lg">🔒 Bounded Money Actions & Audit Trail</span>
+                  <span className="bg-indigo-500/30 text-indigo-200 text-xs px-2.5 py-0.5 rounded-full border border-indigo-400/30">Track 01 Compliance</span>
+                </div>
+                <p className="text-gray-300 text-xs mt-1">Every transaction action explainable, bounded, gated, and failure-handled gracefully.</p>
+              </div>
+              <span className="bg-emerald-500/20 text-emerald-300 text-xs font-semibold px-3 py-1 rounded-full border border-emerald-500/30">
+                Razorpay Test Mode Active
+              </span>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Bounded Rules Explanation */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-medium">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <span className="text-indigo-600 font-bold text-sm block mb-1">1. Bounded Limits</span>
+                  <p className="text-gray-600">Maximum order bound: $5,000 USD. Stock levels strictly verified before money action execution.</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <span className="text-indigo-600 font-bold text-sm block mb-1">2. Explainable Failure Audit</span>
+                  <p className="text-gray-600">All failed attempts (Card Expired, Bank Declined, Insufficient Balance) recorded with full audit traces.</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <span className="text-indigo-600 font-bold text-sm block mb-1">3. AP2/ACP Protocol</span>
+                  <p className="text-gray-600">Agent-readable catalog (<code className="text-indigo-600 font-mono">/api/agent/catalog</code>) enabled for AI buyers.</p>
+                </div>
               </div>
             </div>
           </div>
