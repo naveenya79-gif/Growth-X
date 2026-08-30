@@ -51,7 +51,8 @@ const Chatbot = () => {
 
     setTimeout(() => {
       const queryLower = userText.toLowerCase();
-      
+      const isBuyIntent = queryLower.includes('buy') || queryLower.includes('purchase') || queryLower.includes('want') || queryLower.includes('order') || queryLower.includes('shoe') || queryLower.includes('mobile') || queryLower.includes('cloth') || queryLower.includes('cosmetic');
+
       // Extract price constraint if user mentioned "under X" or "$X"
       let maxPrice = Infinity;
       const priceMatch = queryLower.match(/under\s*\$?(\d+)/) || queryLower.match(/\$?(\d+)\s*dollars/);
@@ -71,11 +72,11 @@ const Chatbot = () => {
           category.includes(queryLower) ||
           desc.includes(queryLower) ||
           tags.some((t) => t.includes(queryLower)) ||
-          // Fuzzy match for common category keywords
-          (queryLower.includes('shoe') && (category.includes('shoe') || category.includes('sock'))) ||
-          (queryLower.includes('phone') && (category.includes('mobile') || category.includes('accessory'))) ||
-          (queryLower.includes('mobile') && (category.includes('mobile') || category.includes('accessory'))) ||
-          (queryLower.includes('cloth') && (category.includes('cloth') || category.includes('accessory'))) ||
+          // Keyword rules
+          (queryLower.includes('shoe') && (category.includes('shoe') || name.includes('shoe') || name.includes('sneaker'))) ||
+          (queryLower.includes('phone') && (category.includes('mobile') || name.includes('iphone') || name.includes('galaxy'))) ||
+          (queryLower.includes('mobile') && (category.includes('mobile') || name.includes('iphone') || name.includes('galaxy'))) ||
+          (queryLower.includes('cloth') && (category.includes('cloth') || name.includes('jacket') || name.includes('shirt'))) ||
           (queryLower.includes('jacket') && name.includes('jacket')) ||
           (queryLower.includes('cosmetic') && (category.includes('cosmetic') || category.includes('skincare'))) ||
           (queryLower.includes('cream') || queryLower.includes('serum') || queryLower.includes('skincare'));
@@ -85,16 +86,26 @@ const Chatbot = () => {
         return matchesQuery && matchesPrice;
       });
 
-      // If no strict match, fallback to top products or matching category
+      // If no strict match, fallback to top catalog products
       if (matches.length === 0) {
         matches = catalog.slice(0, 3);
       } else {
         matches = matches.slice(0, 4);
       }
 
-      let responseText = `Here are the best items I found for "${userText}":`;
-      if (matches.length === 0) {
-        responseText = `I couldn't find exact matches for "${userText}", but check out our top trending items below:`;
+      const topMatch = matches[0];
+      let responseText = `Here are the best matching items for "${userText}":`;
+
+      if (topMatch && isBuyIntent) {
+        responseText = `🚀 Redirecting you to buy ${topMatch.name}...`;
+        
+        // Auto-redirect to top match product details after 1 second
+        setTimeout(() => {
+          if (topMatch._id) {
+            navigate(`/product/${topMatch._id}`);
+            setIsOpen(false);
+          }
+        }, 1200);
       }
 
       setMessages((prev) => [
@@ -106,7 +117,7 @@ const Chatbot = () => {
         }
       ]);
       setLoading(false);
-    }, 600);
+    }, 500);
   };
 
   const handleAddToCart = (product) => {
@@ -242,22 +253,28 @@ const Chatbot = () => {
           {/* Quick Prompt Chips */}
           <div className="px-3 py-2 bg-white border-t border-gray-100 flex gap-1.5 overflow-x-auto text-[11px] font-semibold text-gray-600 no-scrollbar">
             <button
-              onClick={() => { setInput('Show me shoes'); }}
+              onClick={() => { setInput('Buy shoes'); }}
               className="bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 px-2.5 py-1 rounded-full whitespace-nowrap transition-colors"
             >
-              👟 Shoes
+              👟 Buy Shoes
             </button>
             <button
-              onClick={() => { setInput('Mobile accessories'); }}
+              onClick={() => { setInput('Buy mobile phone'); }}
               className="bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 px-2.5 py-1 rounded-full whitespace-nowrap transition-colors"
             >
-              📱 Mobiles
+              📱 Buy Mobiles
             </button>
             <button
-              onClick={() => { setInput('Cosmetics and skincare'); }}
+              onClick={() => { setInput('Buy denim jacket clothes'); }}
               className="bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 px-2.5 py-1 rounded-full whitespace-nowrap transition-colors"
             >
-              💄 Cosmetics
+              🧥 Buy Clothes
+            </button>
+            <button
+              onClick={() => { setInput('Buy cosmetics skincare'); }}
+              className="bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 px-2.5 py-1 rounded-full whitespace-nowrap transition-colors"
+            >
+              💄 Buy Cosmetics
             </button>
           </div>
 
