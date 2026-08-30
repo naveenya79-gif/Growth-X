@@ -156,13 +156,14 @@ const deleteProduct = async (req, res) => {
 };
 
 const COMPLEMENTARY_CATEGORIES = {
-  Shoes: ['Socks'],
+  Shoes: ['Socks', 'Shoe Accessories'],
   Socks: ['Shoes'],
   Mobiles: ['Mobile Accessories', 'Electronics'],
   'Mobile Accessories': ['Mobiles', 'Electronics'],
   Clothes: ['Clothing Accessories', 'Shoes'],
   'Clothing Accessories': ['Clothes'],
   Cosmetics: ['Skincare'],
+  Skincare: ['Cosmetics'],
   Electronics: ['Mobile Accessories', 'Mobiles'],
   Watches: ['Clothing Accessories', 'Mobiles']
 };
@@ -182,8 +183,23 @@ const getProductRecommendations = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const complementList = COMPLEMENTARY_CATEGORIES[purchasedProduct.category] || [];
-    const targetCategories = [purchasedProduct.category, ...complementList];
+    const category = purchasedProduct.category || '';
+    const nameLower = (purchasedProduct.name || '').toLowerCase();
+    
+    let complementList = COMPLEMENTARY_CATEGORIES[category] ? [...COMPLEMENTARY_CATEGORIES[category]] : [];
+    
+    // Keyword based dynamic rules
+    if (nameLower.includes('shoe') || nameLower.includes('sneaker') || category === 'Shoes') {
+      if (!complementList.includes('Socks')) complementList.push('Socks');
+    }
+    if (nameLower.includes('phone') || nameLower.includes('iphone') || nameLower.includes('galaxy') || category === 'Mobiles') {
+      if (!complementList.includes('Mobile Accessories')) complementList.push('Mobile Accessories');
+    }
+    if (nameLower.includes('shirt') || nameLower.includes('jacket') || category === 'Clothes') {
+      if (!complementList.includes('Clothing Accessories')) complementList.push('Clothing Accessories');
+    }
+
+    const targetCategories = [category, ...complementList];
 
     // Query database for same category OR complementary category OR brand OR tags
     const query = {
@@ -216,7 +232,7 @@ const getProductRecommendations = async (req, res) => {
       }
       
       // Same brand = +3
-      if (product.brand === purchasedProduct.brand) {
+      if (purchasedProduct.brand && product.brand === purchasedProduct.brand) {
         score += 3;
       }
 

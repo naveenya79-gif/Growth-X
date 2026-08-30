@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../redux/slices/cartSlice';
+import RecommendationCard from '../components/RecommendationCard';
 import axios from 'axios';
 
 const ProductDetails = () => {
@@ -9,27 +10,70 @@ const ProductDetails = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const cart = useSelector((state) => state.cart);
+  const { cartItems } = cart;
+
   const [product, setProduct] = useState({});
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const [addedMap, setAddedMap] = useState({});
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductAndRecs = async () => {
+      setLoading(true);
       try {
         const { data } = await axios.get(`http://localhost:5000/api/products/${id}`);
         setProduct(data);
+
+        // Fetch recommendations for this product
+        if (data && data._id) {
+          setLoadingRecs(true);
+          try {
+            const recRes = await axios.get(`http://localhost:5000/api/products/${data._id}/recommendations`);
+            if (recRes.data.success) {
+              setRecommendations(recRes.data.recommendations || []);
+            }
+          } catch (recErr) {
+            console.error('Error loading recommendations:', recErr);
+          } finally {
+            setLoadingRecs(false);
+          }
+        }
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     };
-    fetchProduct();
+    fetchProductAndRecs();
   }, [id]);
 
   const addToCartHandler = () => {
     dispatch(addToCart({ ...product, product: product._id, qty: Number(qty) }));
     navigate('/cart');
+  };
+
+  const handleAddRecToCart = (item) => {
+    const existItem = cartItems.find((x) => (x.product || x._id) === item._id);
+    const currentQty = existItem ? existItem.qty : 0;
+    const stockLimit = item.countInStock !== undefined ? item.countInStock : 10;
+    const newQty = Math.min(currentQty + 1, stockLimit);
+
+    dispatch(
+      addToCart({
+        ...item,
+        product: item._id,
+        qty: newQty,
+        countInStock: stockLimit,
+      })
+    );
+
+    setAddedMap((prev) => ({ ...prev, [item._id]: true }));
+    setTimeout(() => {
+      setAddedMap((prev) => ({ ...prev, [item._id]: false }));
+    }, 2500);
   };
 
   if (loading) {
@@ -41,17 +85,18 @@ const ProductDetails = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <Link to="/" className="text-indigo-600 hover:underline mb-6 inline-block">&larr; Back to Results</Link>
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col md:flex-row">
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      <Link to="/" className="text-indigo-600 hover:underline mb-6 inline-block font-medium">&larr; Back to Results</Link>
+      
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col md:flex-row mb-12">
         <div className="md:w-1/2 p-8 flex justify-center bg-gray-50">
           <img src={product.image || 'https://via.placeholder.com/600x600?text=Product'} alt={product.name} className="max-w-full h-auto object-contain rounded-lg shadow-sm" />
         </div>
         <div className="md:w-1/2 p-8 flex flex-col justify-between">
           <div>
             <span className="text-sm text-indigo-500 font-semibold tracking-wider uppercase">{product.category}</span>
-            <h1 className="text-4xl font-bold text-gray-900 mt-2 mb-4">{product.name}</h1>
-            <p className="text-gray-600 text-lg mb-6 leading-relaxed">{product.description}</p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mt-2 mb-4">{product.name}</h1>
+            <p className="text-gray-600 text-base sm:text-lg mb-6 leading-relaxed">{product.description}</p>
           </div>
           
           <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
@@ -92,6 +137,35 @@ const ProductDetails = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* AI Recommendations Section on Product Details Page */}
+      <div className="mt-12">
+        <div className="flex items-center space-x-2 mb-6">
+          <span className="text-indigo-600 text-xl font-bold">✨ Frequently Bought Together / Related Add-ons</span>
+          <span className="text-xs text-gray-500 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full font-medium">AI Suggestions</span>
+        </div>
+
+        {loadingRecs ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((n) => (
+              <div key={n} className="h-64 bg-gray-100 animate-pulse rounded-2xl"></div>
+            ))}
+          </div>
+        ) : recommendations.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {recommendations.map((item) => (
+              <RecommendationCard
+                key={item._id}
+                item={item}
+                isAdded={!!addedMap[item._id]}
+                onAddToCart={handleAddRecToCart}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">No additional recommendations found.</p>
+        )}
       </div>
     </div>
   );
