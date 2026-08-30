@@ -155,6 +155,18 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+const COMPLEMENTARY_CATEGORIES = {
+  Shoes: ['Socks'],
+  Socks: ['Shoes'],
+  Mobiles: ['Mobile Accessories', 'Electronics'],
+  'Mobile Accessories': ['Mobiles', 'Electronics'],
+  Clothes: ['Clothing Accessories', 'Shoes'],
+  'Clothing Accessories': ['Clothes'],
+  Cosmetics: ['Skincare'],
+  Electronics: ['Mobile Accessories', 'Mobiles'],
+  Watches: ['Clothing Accessories', 'Mobiles']
+};
+
 // @desc    Get recommendations for a product
 // @route   GET /api/products/:id/recommendations
 // @access  Public
@@ -170,12 +182,15 @@ const getProductRecommendations = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    // Efficient Database Query: find products with same category OR brand OR tags
+    const complementList = COMPLEMENTARY_CATEGORIES[purchasedProduct.category] || [];
+    const targetCategories = [purchasedProduct.category, ...complementList];
+
+    // Query database for same category OR complementary category OR brand OR tags
     const query = {
       _id: { $ne: purchasedProduct._id },
       status: 'Active',
       $or: [
-        { category: purchasedProduct.category },
+        { category: { $in: targetCategories } },
         { brand: purchasedProduct.brand }
       ]
     };
@@ -184,17 +199,26 @@ const getProductRecommendations = async (req, res) => {
       query.$or.push({ tags: { $in: purchasedProduct.tags } });
     }
 
-    let potentialProducts = await Product.find(query).select('name brand category tags price image rating');
+    let potentialProducts = await Product.find(query).select('name brand category tags price image rating countInStock');
 
     // Scoring Algorithm
     const scoredProducts = potentialProducts.map(product => {
       let score = 0;
 
+      // Complementary category (e.g. Shoes -> Socks, Mobile -> Mobile Accessories) = +10
+      if (complementList.includes(product.category)) {
+        score += 10;
+      }
+
       // Same category = +5
-      if (product.category === purchasedProduct.category) score += 5;
+      if (product.category === purchasedProduct.category) {
+        score += 5;
+      }
       
       // Same brand = +3
-      if (product.brand === purchasedProduct.brand) score += 3;
+      if (product.brand === purchasedProduct.brand) {
+        score += 3;
+      }
 
       // Each matching tag = +2
       if (Array.isArray(purchasedProduct.tags) && Array.isArray(product.tags)) {
@@ -213,36 +237,25 @@ const getProductRecommendations = async (req, res) => {
 
     let recommendations = scoredProducts.slice(0, 4).map(item => item.product);
 
-    // Fallback: If fewer than 4 items found, prioritize category-based fallback
+    // Fallback: If fewer than 4 items found, grab ANY active product
     if (recommendations.length < 4) {
       const existingIds = recommendations.map(p => p._id);
       existingIds.push(purchasedProduct._id);
       
       const fallbackProducts = await Product.find({
         _id: { $nin: existingIds },
-        category: purchasedProduct.category,
         status: 'Active'
-      }).limit(4 - recommendations.length).select('name brand category tags price image rating');
+      }).limit(4 - recommendations.length).select('name brand category tags price image rating countInStock');
       
       recommendations = [...recommendations, ...fallbackProducts];
-      
-      // If still fewer than 4, grab ANY active product
-      if (recommendations.length < 4) {
-          const newExistingIds = recommendations.map(p => p._id);
-          newExistingIds.push(purchasedProduct._id);
-          const finalFallback = await Product.find({
-             _id: { $nin: newExistingIds },
-             status: 'Active'
-          }).limit(4 - recommendations.length).select('name brand category tags price image rating');
-          recommendations = [...recommendations, ...finalFallback];
-      }
     }
 
     res.json({
       success: true,
       purchasedProduct: {
         _id: purchasedProduct._id,
-        name: purchasedProduct.name
+        name: purchasedProduct.name,
+        category: purchasedProduct.category
       },
       recommendations
     });
