@@ -15,6 +15,7 @@ import AdminProducts from './pages/AdminProducts';
 import AdminAddProduct from './pages/AdminAddProduct';
 import AdminEditProduct from './pages/AdminEditProduct';
 import PostPurchase from './pages/PostPurchase';
+import Chatbot from './components/Chatbot';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Routes>
       </main>
+      <Chatbot />
       <Footer />
     </div>
   );
