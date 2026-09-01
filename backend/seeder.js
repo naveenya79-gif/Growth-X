@@ -17,7 +17,7 @@ const importData = async () => {
     await User.deleteMany();
     await Payment.deleteMany();
 
-    const createdUsers = await User.insertMany([
+    const createdUsers = await User.create([
       {
         name: "Admin User",
         email: "admin@example.com",

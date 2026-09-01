@@ -83,7 +83,7 @@ const PostPurchase = () => {
       <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link
           to="/"
-          className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-sm sm:text-base py-3 px-6 rounded-xl shadow-md shadow-indigo-200 hover:shadow-indigo-300 transition-all duration-300"
+          className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-[#2878D8] hover:bg-[#1769C2] text-white font-bold text-xs sm:text-sm py-3 px-6 rounded-xl shadow-md shadow-[#2878D8]/20 transition-all"
         >
           <FaArrowLeft className="text-xs" />
           <span>Continue Shopping</span>
@@ -91,9 +91,9 @@ const PostPurchase = () => {
 
         <Link
           to="/cart"
-          className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 active:scale-95 font-bold text-sm sm:text-base py-3 px-6 rounded-xl border border-gray-200 hover:border-gray-300 shadow-sm transition-all duration-300"
+          className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 text-[#172033] hover:text-[#2878D8] bg-white hover:bg-[#F4F9FF] font-bold text-xs sm:text-sm py-3 px-6 rounded-xl border border-[#E5EAF0] shadow-xs transition-all"
         >
-          <FaShoppingCart className="text-xs text-gray-500" />
+          <FaShoppingCart className="text-xs text-[#2878D8]" />
           <span>View Shopping Cart</span>
         </Link>
       </div>

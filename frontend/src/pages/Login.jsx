@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCredentials } from '../redux/slices/userSlice';
 import axios from 'axios';
+import { FaStore, FaLock, FaEnvelope, FaShieldAlt } from 'react-icons/fa';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -35,44 +36,82 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[70vh]">
-      <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
-        <h1 className="text-3xl font-bold text-center text-gray-900 mb-6">Sign In</h1>
-        {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">{error}</div>}
+    <div className="flex justify-center items-center py-12 px-4 min-h-[75vh]">
+      <div className="bg-white border border-[#E5EAF0] p-8 sm:p-10 rounded-3xl shadow-xs max-w-md w-full space-y-6">
         
-        <form onSubmit={submitHandler}>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Email Address</label>
-            <input 
-              type="email" 
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500" 
-              placeholder="Enter email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+        {/* Brand Icon & Heading */}
+        <div className="text-center space-y-2">
+          <div className="w-12 h-12 rounded-2xl bg-[#2878D8] text-white flex items-center justify-center mx-auto text-xl shadow-md shadow-[#2878D8]/20">
+            <FaStore />
           </div>
-          <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Password</label>
-            <input 
-              type="password" 
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500" 
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+          <h1 className="text-2xl font-extrabold text-[#172033]">
+            Welcome Back to <span className="text-[#2878D8]">eKart</span>
+          </h1>
+          <p className="text-xs text-[#667085]">Sign in to access your cart, wishlist, and orders</p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-[#E53935] p-3.5 rounded-xl text-xs font-semibold">
+            {error}
           </div>
-          <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded hover:bg-indigo-700 transition-colors">
+        )}
+        
+        <form onSubmit={submitHandler} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-[#172033] mb-1.5 uppercase tracking-wider">
+              Email Address
+            </label>
+            <div className="relative flex items-center">
+              <FaEnvelope className="absolute left-3.5 text-[#667085] text-xs" />
+              <input 
+                type="email" 
+                className="w-full pl-9 pr-4 py-3 bg-[#F4F9FF] border border-[#E5EAF0] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-[#2878D8]" 
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#172033] mb-1.5 uppercase tracking-wider">
+              Password
+            </label>
+            <div className="relative flex items-center">
+              <FaLock className="absolute left-3.5 text-[#667085] text-xs" />
+              <input 
+                type="password" 
+                className="w-full pl-9 pr-4 py-3 bg-[#F4F9FF] border border-[#E5EAF0] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-[#2878D8]" 
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-[#2878D8] hover:bg-[#1769C2] text-white font-extrabold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-[#2878D8]/20 transition-all"
+          >
             Sign In
           </button>
         </form>
-        <div className="mt-6 text-center text-sm">
-          New Customer?{' '}
-          <Link to={redirect ? `/register?redirect=${redirect}` : '/register'} className="text-indigo-600 hover:underline">
-            Register Here
-          </Link>
+
+        <div className="pt-4 border-t border-[#E5EAF0] text-center text-xs text-[#667085] space-y-2">
+          <p>
+            New to eKart?{' '}
+            <Link to={redirect ? `/register?redirect=${redirect}` : '/register'} className="text-[#2878D8] font-bold hover:underline">
+              Create an Account
+            </Link>
+          </p>
+          <div className="flex items-center justify-center space-x-1 text-[10px] text-[#667085]">
+            <FaShieldAlt className="text-[#16A34A]" />
+            <span>Secure 256-Bit SSL Encrypted Login</span>
+          </div>
         </div>
+
       </div>
     </div>
   );

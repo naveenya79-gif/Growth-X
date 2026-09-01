@@ -6,19 +6,27 @@ const generateToken = require('../utils/generateToken');
 // @route   POST /api/users/login
 // @access  Public
 const authUser = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-  if (user && (await user.matchPassword(password))) {
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(401).json({ message: 'Invalid email or password' });
+    const user = await User.findOne({ email });
+
+    if (user && (await user.matchPassword(password))) {
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(401).json({ message: 'Invalid email or password' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -26,55 +34,67 @@ const authUser = async (req, res) => {
 // @route   POST /api/users
 // @access  Public
 const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
-  const userExists = await User.findOne({ email });
+  try {
+    const { name, email, password } = req.body || {};
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Please provide name, email, and password' });
+    }
 
-  if (userExists) {
-    return res.status(400).json({ message: 'User already exists' });
-  }
+    const userExists = await User.findOne({ email });
 
-  const user = await User.create({ name, email, password });
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
 
-  if (user) {
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(400).json({ message: 'Invalid user data' });
+    const user = await User.create({ name, email, password });
+
+    if (user) {
+      res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(400).json({ message: 'Invalid user data' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
 const authAdmin = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body || {};
 
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
-  }
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-  const user = await User.findOne({ email });
+    const user = await User.findOne({ email });
 
-  if (!user) {
-    return res.status(401).json({ message: 'Invalid email or password' });
-  }
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
 
-  if (!user.isAdmin) {
-    return res.status(401).json({ message: 'Not authorized as an admin' });
-  }
+    if (!user.isAdmin) {
+      return res.status(401).json({ message: 'Not authorized as an admin' });
+    }
 
-  if (await user.matchPassword(password)) {
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(401).json({ message: 'Invalid email or password' });
+    if (await user.matchPassword(password)) {
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(401).json({ message: 'Invalid email or password' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -117,7 +137,7 @@ const getDashboardStats = async (req, res) => {
       recentProducts,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching dashboard statistics' });
+    res.status(500).json({ message: 'Error fetching dashboard statistics', error: error.message });
   }
 };
 

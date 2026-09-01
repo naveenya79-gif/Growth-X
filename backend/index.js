@@ -34,6 +34,20 @@ app.get('/', (req, res) => {
   res.send('REVIVE API is running...');
 });
 
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({ message: `Not Found - ${req.originalUrl}` });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  res.status(statusCode).json({
+    message: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack
+  });
+});
+
 const startServer = async () => {
   await connectDB();
   const PORT = process.env.PORT || 5000;
