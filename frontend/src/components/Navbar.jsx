@@ -17,20 +17,24 @@ import {
   FaGem,
   FaCookieBite,
   FaPumpSoap,
+  FaShoePrints,
   FaLaptop,
+  FaFlask,
   FaFire
 } from 'react-icons/fa';
 import { logout } from '../redux/slices/userSlice';
 import WishlistModal from './WishlistModal';
 
 const categoriesList = [
-  { id: 'all', label: 'All Products', icon: FaBoxes },
-  { id: 'Shirt', label: 'Shirt & Apparel', icon: FaTshirt },
-  { id: 'Watch', label: 'Watches', icon: FaClock },
-  { id: 'Accessories', label: 'Accessories', icon: FaGem },
-  { id: 'Chocolates', label: 'Chocolates', icon: FaCookieBite },
-  { id: 'Perfumes', label: 'Perfumes', icon: FaPumpSoap },
-  { id: 'Electronics', label: 'Mobiles & Tech', icon: FaLaptop },
+  { id: 'all',         label: 'All Products',  icon: FaBoxes      },
+  { id: 'Clothes',     label: 'Clothes',        icon: FaTshirt     },
+  { id: 'Watches',     label: 'Watches',        icon: FaClock      },
+  { id: 'Accessories', label: 'Accessories',    icon: FaGem        },
+  { id: 'Shoes',       label: 'Shoes',          icon: FaShoePrints },
+  { id: 'Cosmetics',   label: 'Cosmetics',      icon: FaFlask      },
+  { id: 'Perfumes',    label: 'Perfumes',       icon: FaPumpSoap   },
+  { id: 'Chocolates',  label: 'Chocolates',     icon: FaCookieBite },
+  { id: 'Electronics', label: 'Electronics',   icon: FaLaptop     },
 ];
 
 const Navbar = () => {

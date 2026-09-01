@@ -18,18 +18,21 @@ import {
   FaCheckCircle,
   FaShieldAlt,
   FaTruck,
-  FaHeadset
+  FaHeadset,
+  FaFlask,
+  FaMobileAlt
 } from 'react-icons/fa';
 
 const categoryCards = [
-  { id: 'all', label: 'All Categories', icon: FaBoxes, color: 'bg-blue-50 text-[#2878D8]', desc: 'Browse Everything' },
-  { id: 'Shirt', label: 'Shirts & Tops', icon: FaTshirt, color: 'bg-sky-50 text-[#2878D8]', desc: 'Oxford, Linen & Denim' },
-  { id: 'Watch', label: 'Watches', icon: FaClock, color: 'bg-indigo-50 text-[#1769C2]', desc: 'Smart & Luxury Watches' },
-  { id: 'Accessories', label: 'Accessories', icon: FaGem, color: 'bg-emerald-50 text-[#16A34A]', desc: 'Belts, Sunglasses & Wallets' },
-  { id: 'Chocolates', label: 'Chocolates', icon: FaCookieBite, color: 'bg-amber-50 text-amber-600', desc: 'Swiss & Belgian Truffles' },
-  { id: 'Perfumes', label: 'Perfumes', icon: FaPumpSoap, color: 'bg-rose-50 text-rose-500', desc: 'Luxury Eau de Parfum' },
-  { id: 'Shoes', label: 'Shoes & Footwear', icon: FaShoePrints, color: 'bg-cyan-50 text-cyan-600', desc: 'Sneakers & Oxfords' },
-  { id: 'Electronics', label: 'Mobiles & Tech', icon: FaLaptop, color: 'bg-violet-50 text-violet-600', desc: 'Phones & ANC Headphones' },
+  { id: 'all',         label: 'All Categories',   icon: FaBoxes,      color: 'bg-blue-50 text-[#2878D8]',    desc: 'Browse Everything' },
+  { id: 'Clothes',     label: 'Clothes',           icon: FaTshirt,     color: 'bg-sky-50 text-[#2878D8]',     desc: 'Shirts, Jeans & Jackets' },
+  { id: 'Watches',     label: 'Watches',           icon: FaClock,      color: 'bg-indigo-50 text-[#1769C2]',  desc: 'Smart & Luxury Watches' },
+  { id: 'Accessories', label: 'Accessories',       icon: FaGem,        color: 'bg-emerald-50 text-[#16A34A]', desc: 'Bags, Belts & Sunglasses' },
+  { id: 'Chocolates',  label: 'Chocolates',        icon: FaCookieBite, color: 'bg-amber-50 text-amber-600',   desc: 'Swiss & Belgian Truffles' },
+  { id: 'Perfumes',    label: 'Perfumes',          icon: FaPumpSoap,   color: 'bg-rose-50 text-rose-500',     desc: 'Luxury Eau de Parfum' },
+  { id: 'Shoes',       label: 'Shoes & Footwear',  icon: FaShoePrints, color: 'bg-cyan-50 text-cyan-600',     desc: 'Sneakers & Boots' },
+  { id: 'Cosmetics',   label: 'Cosmetics',         icon: FaFlask,      color: 'bg-violet-50 text-violet-600', desc: 'Makeup & Skincare' },
+  { id: 'Electronics', label: 'Electronics',       icon: FaMobileAlt,  color: 'bg-orange-50 text-orange-500', desc: 'Phones, Laptops & More' },
 ];
 
 const Home = () => {
@@ -62,19 +65,17 @@ const Home = () => {
       try {
         const { data } = await axios.get('http://localhost:5000/api/products');
         if (Array.isArray(data) && data.length > 0) {
-          // Merge API products with curated fallback items to guarantee rich dataset
-          const merged = [...data];
-          curatedProducts.forEach((curated) => {
-            if (!merged.some((p) => p.name.toLowerCase() === curated.name.toLowerCase())) {
-              merged.push(curated);
-            }
-          });
-          setProducts(merged);
+          // DB products take priority; add curated only if name truly absent
+          const dbNamesLower = new Set(data.map((p) => p.name.toLowerCase().trim()));
+          const extras = curatedProducts.filter(
+            (c) => !dbNamesLower.has(c.name.toLowerCase().trim())
+          );
+          setProducts([...data, ...extras]);
         } else {
           setProducts(curatedProducts);
         }
       } catch (err) {
-        console.warn('API connection failed, loading curated product dataset:', err.message);
+        console.warn('API unavailable, using curated dataset:', err.message);
         setProducts(curatedProducts);
       } finally {
         setLoading(false);
@@ -83,22 +84,25 @@ const Home = () => {
     fetchProducts();
   }, []);
 
-  // Category & Search Filter logic
+  // Category & Search Filter logic — case-insensitive, trims whitespace
   const filteredProducts = products.filter((item) => {
+    const cat = (item.category || '').trim().toLowerCase();
+    const activeLower = activeCategory.toLowerCase().trim();
+
     const matchesCategory =
       activeCategory === 'all' ||
-      (item.category && item.category.toLowerCase().includes(activeCategory.toLowerCase())) ||
-      (activeCategory === 'Shirt' && (item.category === 'Clothes' || item.tags?.includes('shirt'))) ||
-      (activeCategory === 'Watch' && (item.category === 'Watches' || item.tags?.includes('watches'))) ||
-      (activeCategory === 'Accessories' && (item.category?.includes('Accessory') || item.category?.includes('Accessories'))) ||
-      (activeCategory === 'Shoes' && (item.category === 'Shoes' || item.tags?.includes('shoes')));
+      cat === activeLower ||
+      cat.includes(activeLower) ||
+      (item.tags && item.tags.some((t) => t.toLowerCase().trim() === activeLower));
 
+    const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      !searchQuery ||
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (item.brand && item.brand.toLowerCase().includes(searchQuery.toLowerCase()));
+      !q ||
+      (item.name || '').toLowerCase().includes(q) ||
+      (item.description || '').toLowerCase().includes(q) ||
+      cat.includes(q) ||
+      (item.brand || '').toLowerCase().includes(q) ||
+      (item.tags && item.tags.some((t) => t.toLowerCase().includes(q)));
 
     return matchesCategory && matchesSearch;
   });
@@ -125,7 +129,8 @@ const Home = () => {
 
   return (
     <div className="space-y-12 sm:space-y-16 pb-12">
-      {/* Hero Banner Section */}
+      {/* Hero Banner Section (Only show on 'All Categories' view) */}
+      {activeCategory === 'all' && (
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#F4F9FF] via-white to-[#E8F3FF] border border-[#E5EAF0] p-6 sm:p-10 md:p-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           
@@ -203,6 +208,7 @@ const Home = () => {
 
         </div>
       </section>
+      )}
 
       {/* Flipkart-Style Interactive Category Grid Cards Section */}
       <section id="category-cards-section" className="space-y-6">
@@ -219,7 +225,7 @@ const Home = () => {
         </div>
 
         {/* 8 Category Cards Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3 sm:gap-4">
           {categoryCards.map((cat) => {
             const Icon = cat.icon;
             const isSelected = activeCategory === cat.id;
@@ -248,7 +254,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Best Deals of the Day Banner Section */}
+      {/* Best Deals of the Day Banner Section (Only show on 'All Categories' view) */}
+      {activeCategory === 'all' && (
       <section id="best-deals-section" className="bg-[#F4F9FF] border border-[#E5EAF0] rounded-3xl p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-[#E5EAF0] pb-6 mb-6">
           <div className="flex items-center space-x-3">
@@ -283,6 +290,7 @@ const Home = () => {
           ))}
         </div>
       </section>
+      )}
 
       {/* Product Catalog Grid Section */}
       <section id="product-catalog-section" className="space-y-6">
@@ -354,7 +362,8 @@ const Home = () => {
         )}
       </section>
 
-      {/* Promotional Banner Section */}
+      {/* Promotional Banner Section (Only show on 'All Categories' view) */}
+      {activeCategory === 'all' && (
       <section className="relative rounded-3xl bg-gradient-to-r from-[#E8F3FF] to-[#F4F9FF] border border-[#E5EAF0] p-8 sm:p-12 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-3 max-w-xl text-center md:text-left">
           <span className="text-xs font-extrabold uppercase tracking-wider text-[#2878D8] bg-white px-3 py-1 rounded-full border border-[#E5EAF0]">
@@ -374,6 +383,7 @@ const Home = () => {
           Explore Gift Collection
         </button>
       </section>
+      )}
 
       {/* Why Choose eKart Feature Cards */}
       <section className="space-y-6">

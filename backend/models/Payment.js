@@ -18,11 +18,24 @@ const paymentSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: ['Success', 'Failed']
+    enum: ['Success', 'Failed', 'Pending']
   },
   failureReason: {
     type: String,
     enum: ['Card Expired', 'Insufficient Balance', 'Bank Declined', 'Network Error', null],
+    default: null
+  },
+  // Razorpay fields
+  razorpayOrderId: {
+    type: String,
+    default: null
+  },
+  razorpayPaymentId: {
+    type: String,
+    default: null
+  },
+  razorpaySignature: {
+    type: String,
     default: null
   }
 }, {

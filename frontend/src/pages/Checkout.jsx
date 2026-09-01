@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart, clearCart } from '../redux/slices/cartSlice';
@@ -13,8 +13,26 @@ import {
   FaLock,
   FaArrowLeft,
   FaMoneyBillWave,
-  FaMobileAlt
+  FaMobileAlt,
+  FaSpinner,
+  FaRupeeSign,
 } from 'react-icons/fa';
+import { SiRazorpay } from 'react-icons/si';
+
+// ── Utility: load Razorpay checkout script ──────────────────────────────────
+const loadRazorpayScript = () =>
+  new Promise((resolve) => {
+    if (document.getElementById('razorpay-sdk')) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = 'razorpay-sdk';
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -32,13 +50,13 @@ const Checkout = () => {
 
   // Checkout Steps state
   const [step, setStep] = useState(1); // 1: Address, 2: Delivery, 3: Payment
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [shippingAddress, setShippingAddress] = useState({
-    street: '100 Commerce Way, Suite 4B',
-    city: 'San Francisco',
-    state: 'CA',
-    postalCode: '94107',
-    country: 'United States'
+    street: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: 'India',
   });
 
   useEffect(() => {
@@ -62,7 +80,6 @@ const Checkout = () => {
         setLoadingRecs(false);
       }
     };
-
     fetchRecs();
   }, [cartItems]);
 
@@ -97,7 +114,119 @@ const Checkout = () => {
   const taxPrice = Number((0.08 * itemsPrice).toFixed(2));
   const totalPrice = Number((itemsPrice + shippingPrice + taxPrice).toFixed(2));
 
-  const placeOrderHandler = async () => {
+  // ── Razorpay Payment Handler ─────────────────────────────────────────────
+  const handleRazorpayPayment = async () => {
+    setLoading(true);
+    setResult(null);
+
+    // 1. Load Razorpay SDK
+    const scriptLoaded = await loadRazorpayScript();
+    if (!scriptLoaded) {
+      setResult({ success: false, status: 'Error', reason: 'Failed to load Razorpay SDK. Check your internet connection.' });
+      setLoading(false);
+      return;
+    }
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${userInfo.token}`,
+      },
+    };
+
+    try {
+      // 2. Create Razorpay order on backend
+      const { data: orderData } = await axios.post(
+        'http://localhost:5000/api/payment/create-order',
+        { amount: totalPrice, currency: 'INR' },
+        config
+      );
+
+      const primaryProductId = cartItems[0]?.product || cartItems[0]?._id;
+
+      // 3. Open Razorpay checkout popup (real flow)
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'Growth-X Store',
+        description: `Order for ${cartItems.length} item(s)`,
+        order_id: orderData.orderId,
+        prefill: {
+          name: userInfo.name || '',
+          email: userInfo.email || '',
+          contact: userInfo.phone || '',
+        },
+        theme: {
+          color: '#2878D8',
+        },
+        handler: async (response) => {
+          // 4. Verify payment on backend
+          try {
+            const { data: verifyData } = await axios.post(
+              'http://localhost:5000/api/payment/verify',
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderItems: cartItems,
+                totalAmount: totalPrice,
+                shippingAddress,
+                paymentMethod: 'razorpay',
+              },
+              config
+            );
+
+            if (verifyData.success) {
+              dispatch(clearCart());
+              if (primaryProductId) {
+                navigate(`/post-purchase/${primaryProductId}`);
+              } else {
+                setResult({ success: true, status: 'Success' });
+              }
+            } else {
+              setResult({ success: false, status: 'Failed', reason: 'Payment verification failed.' });
+            }
+          } catch (err) {
+            setResult({
+              success: false,
+              status: 'Error',
+              reason: err.response?.data?.message || err.message,
+            });
+          } finally {
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            setResult({ success: false, status: 'Cancelled', reason: 'Payment was cancelled by you.' });
+          },
+        },
+      };
+
+      const rzpInstance = new window.Razorpay(options);
+      rzpInstance.on('payment.failed', (response) => {
+        setLoading(false);
+        setResult({
+          success: false,
+          status: 'Failed',
+          reason: response.error?.description || 'Payment failed',
+        });
+      });
+      rzpInstance.open();
+    } catch (error) {
+      setResult({
+        success: false,
+        status: 'Error',
+        reason: error.response?.data?.message || error.message,
+      });
+      setLoading(false);
+    }
+  };
+
+  // ── COD Handler ──────────────────────────────────────────────────────────
+  const handleCODPayment = async () => {
     setLoading(true);
     setResult(null);
     try {
@@ -107,21 +236,19 @@ const Checkout = () => {
           Authorization: `Bearer ${userInfo.token}`,
         },
       };
-
       const primaryProductId = cartItems[0]?.product || cartItems[0]?._id;
-
       const { data } = await axios.post(
         'http://localhost:5000/api/orders',
         {
           orderItems: cartItems,
           totalAmount: totalPrice,
           shippingAddress,
-          paymentMethod
+          paymentMethod: 'cod',
         },
         config
       );
 
-      if (data.paymentStatus === 'Success') {
+      if (data.paymentStatus === 'Success' || data.order) {
         dispatch(clearCart());
         if (primaryProductId) {
           navigate(`/post-purchase/${primaryProductId}`);
@@ -133,46 +260,59 @@ const Checkout = () => {
         success: data.paymentStatus === 'Success',
         status: data.paymentStatus,
         reason: data.failureReason,
-        orderId: data.order?._id
+        orderId: data.order?._id,
       });
-
     } catch (error) {
       setResult({
         success: false,
         status: 'Error',
-        reason: error.response && error.response.data.message ? error.response.data.message : error.message
+        reason: error.response?.data?.message || error.message,
       });
     } finally {
       setLoading(false);
     }
   };
 
+  const placeOrderHandler = () => {
+    if (paymentMethod === 'cod') {
+      handleCODPayment();
+    } else {
+      handleRazorpayPayment();
+    }
+  };
+
   return (
-    <div className="max-w-5xl mx-auto py-6 space-y-8">
-      
-      {/* Checkout Page Header */}
-      <div className="flex items-center justify-between border-b border-[#E5EAF0] pb-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#172033]">
-            Checkout
-          </h1>
-          <p className="text-xs text-[#667085] font-semibold mt-1">
-            Complete your order safely with eKart SSL encryption
-          </p>
+    <div className="max-w-5xl mx-auto py-6 space-y-8 animate-fade-in">
+
+      {/* Premium Checkout Page Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] p-8 sm:p-10 shadow-2xl border border-white/10">
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-[#2878D8]/20 blur-3xl mix-blend-screen pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl mix-blend-screen pointer-events-none"></div>
+        
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Secure Checkout
+            </h1>
+            <p className="text-sm text-slate-300 font-medium mt-2 flex items-center space-x-2">
+              <FaShieldAlt className="text-emerald-400" />
+              <span>Protected by 256-bit SSL encryption &amp; Razorpay</span>
+            </p>
+          </div>
+          <Link
+            to="/cart"
+            className="text-xs font-bold text-white/80 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl flex items-center space-x-2 transition-all border border-white/10"
+          >
+            <FaArrowLeft size={11} />
+            <span>Back to Cart</span>
+          </Link>
         </div>
-        <Link
-          to="/cart"
-          className="text-xs font-bold text-[#2878D8] hover:underline flex items-center space-x-1"
-        >
-          <FaArrowLeft size={11} />
-          <span>Back to Cart</span>
-        </Link>
       </div>
 
       {/* Progress Step Indicator */}
-      <div className="bg-white border border-[#E5EAF0] rounded-2xl p-4 shadow-xs">
+      <div className="bg-white border border-[#E5EAF0] rounded-2xl p-3 shadow-md shadow-slate-200/50">
         <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold">
-          
+
           <button
             onClick={() => setStep(1)}
             className={`flex items-center justify-center space-x-2 py-2 px-3 rounded-xl transition-colors ${
@@ -208,7 +348,7 @@ const Checkout = () => {
             }`}
           >
             <FaCreditCard size={13} />
-            <span className="hidden sm:inline">3. Payment & Review</span>
+            <span className="hidden sm:inline">3. Payment &amp; Review</span>
             <span className="sm:hidden">3. Payment</span>
           </button>
 
@@ -217,32 +357,34 @@ const Checkout = () => {
 
       {/* Result Status Banner */}
       {result && (
-        <div className={`p-6 rounded-3xl border ${
+        <div className={`p-8 rounded-3xl border shadow-2xl ${
           result.success
-            ? 'bg-green-50 border-green-200 text-green-900'
-            : 'bg-red-50 border-red-200 text-red-900'
+            ? 'bg-gradient-to-br from-green-50 to-emerald-100 border-emerald-200 text-emerald-900 shadow-emerald-900/10'
+            : 'bg-gradient-to-br from-red-50 to-rose-100 border-rose-200 text-rose-900 shadow-rose-900/10'
         }`}>
-          <h2 className="text-xl font-bold mb-2 flex items-center space-x-2">
-            <FaCheckCircle className={result.success ? 'text-[#16A34A]' : 'text-red-500'} />
-            <span>{result.success ? 'Payment Successful!' : 'Payment Failed'}</span>
-          </h2>
-          <p className="text-xs mb-4">
+          <div className="flex items-center space-x-4 mb-3">
+            <FaCheckCircle className={`text-4xl ${result.success ? 'text-emerald-500' : 'text-rose-500'}`} />
+            <h2 className="text-2xl font-extrabold">
+              {result.success ? 'Payment Successful!' : `Payment ${result.status}`}
+            </h2>
+          </div>
+          <p className="text-sm font-medium mb-6 ml-14">
             {result.success
               ? 'Your order has been recorded. Redirecting to post purchase...'
-              : `Failure reason: ${result.reason}`}
+              : `Reason: ${result.reason}`}
           </p>
-          <div className="flex gap-3">
+          <div className="flex gap-4 ml-14">
             {result.success ? (
               <button
                 onClick={() => navigate('/')}
-                className="bg-[#16A34A] text-white px-5 py-2.5 rounded-xl text-xs font-bold"
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all"
               >
                 Continue Shopping
               </button>
             ) : (
               <button
                 onClick={() => setResult(null)}
-                className="bg-[#E53935] text-white px-5 py-2.5 rounded-xl text-xs font-bold"
+                className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-rose-500/20 transition-all"
               >
                 Try Again
               </button>
@@ -254,10 +396,10 @@ const Checkout = () => {
       {/* Checkout Form & Order Summary */}
       {!result && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
+
           {/* Main Steps Form Area */}
           <div className="lg:col-span-8 space-y-6">
-            
+
             {/* Step 1: Address */}
             <div className={`bg-white border rounded-3xl p-6 shadow-xs transition-all ${
               step === 1 ? 'border-[#2878D8] ring-2 ring-[#2878D8]/10' : 'border-[#E5EAF0]'
@@ -281,6 +423,7 @@ const Checkout = () => {
                       <label className="block text-xs font-bold text-[#172033] mb-1">Street Address</label>
                       <input
                         type="text"
+                        placeholder="e.g. 12 MG Road, Koramangala"
                         value={shippingAddress.street}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
                         className="w-full px-3 py-2.5 bg-[#F4F9FF] border border-[#E5EAF0] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-[#2878D8]"
@@ -290,24 +433,27 @@ const Checkout = () => {
                       <label className="block text-xs font-bold text-[#172033] mb-1">City</label>
                       <input
                         type="text"
+                        placeholder="e.g. Bengaluru"
                         value={shippingAddress.city}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
                         className="w-full px-3 py-2.5 bg-[#F4F9FF] border border-[#E5EAF0] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-[#2878D8]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-[#172033] mb-1">State / Province</label>
+                      <label className="block text-xs font-bold text-[#172033] mb-1">State</label>
                       <input
                         type="text"
+                        placeholder="e.g. Karnataka"
                         value={shippingAddress.state}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
                         className="w-full px-3 py-2.5 bg-[#F4F9FF] border border-[#E5EAF0] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-[#2878D8]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-[#172033] mb-1">Postal Code</label>
+                      <label className="block text-xs font-bold text-[#172033] mb-1">PIN Code</label>
                       <input
                         type="text"
+                        placeholder="e.g. 560034"
                         value={shippingAddress.postalCode}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })}
                         className="w-full px-3 py-2.5 bg-[#F4F9FF] border border-[#E5EAF0] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-[#2878D8]"
@@ -318,7 +464,7 @@ const Checkout = () => {
                     onClick={() => setStep(2)}
                     className="bg-[#2878D8] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#1769C2] transition-colors"
                   >
-                    Save & Continue to Delivery &rarr;
+                    Save &amp; Continue to Delivery &rarr;
                   </button>
                 </div>
               ) : (
@@ -352,7 +498,7 @@ const Checkout = () => {
                       <p className="text-[11px] text-[#667085]">Delivered within 2 to 3 business days</p>
                     </div>
                     <span className="text-xs font-extrabold text-[#16A34A]">
-                      {shippingPrice === 0 ? 'FREE' : `$${shippingPrice.toFixed(2)}`}
+                      {shippingPrice === 0 ? 'FREE' : `₹${shippingPrice.toFixed(2)}`}
                     </span>
                   </div>
                   <button
@@ -380,48 +526,70 @@ const Checkout = () => {
 
               {step === 3 && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                    {/* Razorpay Option */}
                     <button
-                      onClick={() => setPaymentMethod('card')}
-                      className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
-                        paymentMethod === 'card'
-                          ? 'border-[#2878D8] bg-[#E8F3FF] text-[#2878D8] font-bold'
-                          : 'border-[#E5EAF0] bg-white text-[#172033] hover:border-[#2878D8]'
+                      onClick={() => setPaymentMethod('razorpay')}
+                      className={`p-4 rounded-2xl border text-left flex flex-col gap-2 transition-all ${
+                        paymentMethod === 'razorpay'
+                          ? 'border-[#2878D8] bg-[#E8F3FF] ring-2 ring-[#2878D8]/20'
+                          : 'border-[#E5EAF0] bg-white hover:border-[#2878D8]'
                       }`}
                     >
-                      <FaCreditCard size={20} className="mb-2" />
-                      <span className="text-xs">Credit / Debit Card</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[22px] font-extrabold text-[#072654]">Razorpay</span>
+                        {paymentMethod === 'razorpay' && (
+                          <span className="ml-auto text-[10px] bg-[#2878D8] text-white px-2 py-0.5 rounded-full font-bold">Selected</span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-[#667085]">
+                        Pay via UPI, Cards, Net Banking, Wallets &amp; EMI — with OTP verification
+                      </span>
                     </button>
 
-                    <button
-                      onClick={() => setPaymentMethod('upi')}
-                      className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
-                        paymentMethod === 'upi'
-                          ? 'border-[#2878D8] bg-[#E8F3FF] text-[#2878D8] font-bold'
-                          : 'border-[#E5EAF0] bg-white text-[#172033] hover:border-[#2878D8]'
-                      }`}
-                    >
-                      <FaMobileAlt size={20} className="mb-2" />
-                      <span className="text-xs">UPI / Wallet / Netbanking</span>
-                    </button>
-
+                    {/* COD Option */}
                     <button
                       onClick={() => setPaymentMethod('cod')}
-                      className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
+                      className={`p-4 rounded-2xl border text-left flex flex-col gap-2 transition-all ${
                         paymentMethod === 'cod'
-                          ? 'border-[#2878D8] bg-[#E8F3FF] text-[#2878D8] font-bold'
-                          : 'border-[#E5EAF0] bg-white text-[#172033] hover:border-[#2878D8]'
+                          ? 'border-[#2878D8] bg-[#E8F3FF] ring-2 ring-[#2878D8]/20'
+                          : 'border-[#E5EAF0] bg-white hover:border-[#2878D8]'
                       }`}
                     >
-                      <FaMoneyBillWave size={20} className="mb-2" />
-                      <span className="text-xs">Cash on Delivery</span>
+                      <div className="flex items-center gap-2">
+                        <FaMoneyBillWave size={20} className="text-[#16A34A]" />
+                        <span className="text-xs font-bold text-[#172033]">Cash on Delivery</span>
+                        {paymentMethod === 'cod' && (
+                          <span className="ml-auto text-[10px] bg-[#2878D8] text-white px-2 py-0.5 rounded-full font-bold">Selected</span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-[#667085]">
+                        Pay when your order arrives at your door
+                      </span>
                     </button>
 
                   </div>
 
-                  <div className="p-4 bg-[#F4F9FF] border border-[#E5EAF0] rounded-2xl flex items-center space-x-2 text-xs text-[#667085]">
-                    <FaLock className="text-[#16A34A]" />
+                  {/* Razorpay Badge */}
+                  {paymentMethod === 'razorpay' && (
+                    <div className="p-4 bg-[#F4F9FF] border border-[#E5EAF0] rounded-2xl space-y-2">
+                      <div className="flex items-center space-x-2 text-xs text-[#667085]">
+                        <FaLock className="text-[#16A34A]" />
+                        <span>Secured by Razorpay — OTP sent to your registered mobile number</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {['UPI', 'Visa', 'Mastercard', 'Netbanking', 'Wallets', 'EMI'].map((m) => (
+                          <span key={m} className="text-[10px] bg-white border border-[#E5EAF0] px-2 py-0.5 rounded-full text-[#172033] font-semibold">
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-[#F4F9FF] border border-[#E5EAF0] rounded-2xl flex items-center space-x-2 text-xs text-[#667085]">
+                    <FaShieldAlt className="text-[#16A34A]" />
                     <span>Your payment data is protected with 256-bit SSL encryption.</span>
                   </div>
                 </div>
@@ -448,7 +616,7 @@ const Checkout = () => {
                       </div>
                     </div>
                     <span className="text-xs font-extrabold text-[#172033]">
-                      ${(item.qty * item.price).toFixed(2)}
+                      ₹{(item.qty * item.price).toFixed(2)}
                     </span>
                   </li>
                 ))}
@@ -459,44 +627,58 @@ const Checkout = () => {
 
           {/* Right Order Summary Column */}
           <div className="lg:col-span-4">
-            <div className="bg-white border border-[#E5EAF0] rounded-3xl p-6 shadow-xs sticky top-24 space-y-6">
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-3xl p-6 shadow-2xl shadow-[#2878D8]/5 sticky top-24 space-y-6">
               <h2 className="text-lg font-extrabold text-[#172033] border-b border-[#E5EAF0] pb-4">
                 Order Summary
               </h2>
 
-              <ul className="divide-y divide-[#E5EAF0] text-xs">
-                <li className="py-2.5 flex justify-between text-[#667085]">
+              <ul className="divide-y divide-[#E5EAF0] text-sm">
+                <li className="py-3 flex justify-between text-[#667085]">
                   <span>Items ({cartItems.reduce((a, c) => a + c.qty, 0)})</span>
-                  <span className="font-bold text-[#172033]">${itemsPrice.toFixed(2)}</span>
+                  <span className="font-bold text-[#172033]">₹{itemsPrice.toFixed(2)}</span>
                 </li>
-                <li className="py-2.5 flex justify-between text-[#667085]">
+                <li className="py-3 flex justify-between text-[#667085]">
                   <span>Shipping</span>
-                  <span className="font-bold text-[#16A34A]">
-                    {shippingPrice === 0 ? 'FREE' : `$${shippingPrice.toFixed(2)}`}
+                  <span className="font-bold text-emerald-500">
+                    {shippingPrice === 0 ? 'FREE' : `₹${shippingPrice.toFixed(2)}`}
                   </span>
                 </li>
-                <li className="py-2.5 flex justify-between text-[#667085]">
-                  <span>Estimated Tax</span>
-                  <span className="font-bold text-[#172033]">${taxPrice.toFixed(2)}</span>
+                <li className="py-3 flex justify-between text-[#667085]">
+                  <span>Tax (GST 8%)</span>
+                  <span className="font-bold text-[#172033]">₹{taxPrice.toFixed(2)}</span>
                 </li>
-                <li className="py-4 flex justify-between border-t border-[#E5EAF0] items-baseline">
+                <li className="py-5 flex justify-between border-t border-[#E5EAF0] items-baseline bg-slate-50/50 -mx-6 px-6 mt-2">
                   <span className="text-sm font-extrabold text-[#172033]">Total Amount</span>
-                  <span className="text-2xl font-extrabold text-[#2878D8]">
-                    ${totalPrice.toFixed(2)}
+                  <span className="text-3xl font-black text-[#2878D8] flex items-center">
+                    <FaRupeeSign size={18} />
+                    {totalPrice.toFixed(2)}
                   </span>
                 </li>
               </ul>
 
               <button
+                id="place-order-btn"
                 onClick={placeOrderHandler}
                 disabled={cartItems.length === 0 || loading}
-                className="w-full bg-[#2878D8] hover:bg-[#1769C2] text-white py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md shadow-[#2878D8]/20 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-[#2878D8] to-[#1769C2] hover:from-[#1769C2] hover:to-[#0F539B] text-white py-4 rounded-xl font-extrabold text-sm uppercase tracking-wider shadow-xl shadow-[#2878D8]/30 transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loading ? 'Processing Order...' : 'Place Order & Pay'}
+                {loading ? (
+                  <>
+                    <FaSpinner className="animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : paymentMethod === 'razorpay' ? (
+                  <>
+                    <span>Pay with Razorpay</span>
+                    <span className="text-[10px] opacity-80 uppercase tracking-widest ml-1">· Secure</span>
+                  </>
+                ) : (
+                  <span>Place Order (COD)</span>
+                )}
               </button>
 
-              <div className="text-center text-[10px] text-[#667085] flex items-center justify-center space-x-1">
-                <FaShieldAlt className="text-[#16A34A]" />
+              <div className="text-center text-xs text-[#667085] flex items-center justify-center space-x-2 font-medium bg-emerald-50 text-emerald-700 py-3 rounded-xl">
+                <FaShieldAlt />
                 <span>30-Day Money-Back Guarantee</span>
               </div>
             </div>

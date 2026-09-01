@@ -25,7 +25,8 @@ const agentRoutes = require('./routes/agentRoutes');
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/revenue-risk', paymentRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/revenue-risk', paymentRoutes); // backward-compat alias
 app.use('/api/admin', adminRoutes);
 app.use('/api/agent/catalog', agentRoutes);
 
