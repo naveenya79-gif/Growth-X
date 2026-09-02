@@ -24,26 +24,29 @@ const Cart = () => {
         setRecommendations([]);
         return;
       }
-      const primaryItem = cartItems[0];
-      const targetId = primaryItem.product || primaryItem._id;
-      if (!targetId) return;
 
       setLoadingRecs(true);
       try {
-        const { data } = await axios.get(`http://localhost:5000/api/products/${targetId}/recommendations`);
+        const { data } = await axios.post(`http://localhost:5000/api/products/ai-checkout-recommendations`, {
+          cartItems
+        });
+        
         if (data.success) {
           const cartProductIds = new Set(cartItems.map((c) => c.product || c._id));
           const filtered = (data.recommendations || []).filter((rec) => !cartProductIds.has(rec._id));
           setRecommendations(filtered);
         }
       } catch (err) {
-        console.error('Error fetching cart recommendations:', err);
+        console.error('Error fetching cart AI recommendations:', err);
       } finally {
         setLoadingRecs(false);
       }
     };
 
-    fetchRecs();
+    const timer = setTimeout(() => {
+      fetchRecs();
+    }, 500);
+    return () => clearTimeout(timer);
   }, [cartItems]);
 
   const handleAddRecToCart = (item) => {

@@ -81,9 +81,18 @@ const verifyRazorpayPayment = async (req, res) => {
       }
     }
 
+    // Normalize order items because frontend might send `_id` instead of `product`
+    const normalizedOrderItems = orderItems.map(item => ({
+      name: item.name,
+      qty: item.qty || 1,
+      image: item.image,
+      price: item.price,
+      product: item.product || item._id
+    }));
+
     // 2. Create Order record
     const order = new Order({
-      orderItems,
+      orderItems: normalizedOrderItems,
       user: req.user._id,
       totalAmount: totalAmount || 0,
       shippingAddress,

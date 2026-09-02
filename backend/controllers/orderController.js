@@ -12,8 +12,17 @@ const addOrderItems = async (req, res) => {
       return res.status(400).json({ message: 'No order items' });
     }
 
+    // Normalize order items because frontend might send `_id` instead of `product`
+    const normalizedOrderItems = orderItems.map(item => ({
+      name: item.name,
+      qty: item.qty || 1,
+      image: item.image,
+      price: item.price,
+      product: item.product || item._id
+    }));
+
     const order = new Order({
-      orderItems,
+      orderItems: normalizedOrderItems,
       user: req.user._id,
       totalAmount: totalAmount || 0,
       status: 'Pending'

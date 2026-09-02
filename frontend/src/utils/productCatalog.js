@@ -6,7 +6,7 @@ export const curatedProducts = [
   {
     _id: 'watch-201',
     name: 'Apple Watch Series 9 GPS 45mm Midnight',
-    image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-qcenoFmEdbQ?q=80&w=1000&auto=format&fit=crop',
     description: 'Advanced health tracking, S9 SiP processor, double tap gesture control, and crystal Retina display.',
     category: 'Watches',
     brand: 'Apple',
@@ -21,7 +21,7 @@ export const curatedProducts = [
   {
     _id: 'watch-202',
     name: 'Fossil Neuautra Automatic Chronograph Leather Watch',
-    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-bZpWIOPBw_8?q=80&w=1000&auto=format&fit=crop',
     description: 'Timeless stainless steel case with blue sunray dial and rich genuine brown leather strap.',
     category: 'Watches',
     brand: 'Fossil',
@@ -36,7 +36,7 @@ export const curatedProducts = [
   {
     _id: 'watch-203',
     name: 'Casio G-Shock Tough Solar Waterproof Digital Watch',
-    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-9D0Tzqq7J2k?q=80&w=1000&auto=format&fit=crop',
     description: 'Shock-resistant 200m water-resistant tactical outdoor watch with solar power tech.',
     category: 'Watches',
     brand: 'Casio',
@@ -51,7 +51,7 @@ export const curatedProducts = [
   {
     _id: 'watch-204',
     name: 'Seiko Presage Cocktail Time Automatic Watch',
-    image: 'https://images.unsplash.com/photo-1533136512052-a66e1cdcebf7?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-dwJlt3GxS1k?q=80&w=1000&auto=format&fit=crop',
     description: 'Award-winning Japanese automatic movement with stunning enamel cocktail dial.',
     category: 'Watches',
     brand: 'Seiko',
@@ -66,7 +66,7 @@ export const curatedProducts = [
   {
     _id: 'watch-205',
     name: 'Rolex Submariner Date Automatic Oyster Watch',
-    image: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-TJrkkhdB39E?q=80&w=1000&auto=format&fit=crop',
     description: 'Iconic Swiss diving watch with ceramic bezel, Oystersteel bracelet, and 300m water resistance.',
     category: 'Watches',
     brand: 'Rolex',
@@ -81,7 +81,7 @@ export const curatedProducts = [
   {
     _id: 'watch-206',
     name: 'Samsung Galaxy Watch 6 Classic 47mm',
-    image: 'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-xmslxI6UsiA?q=80&w=1000&auto=format&fit=crop',
     description: 'Rotating bezel design with advanced health tracking and Wear OS by Samsung.',
     category: 'Watches',
     brand: 'Samsung',
@@ -115,7 +115,7 @@ export const curatedProducts = [
   {
     _id: 'cosm-302',
     name: 'MAC Matte Velvet Lipstick – Ruby Woo',
-    image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-yZ7TiYkP3TE?q=80&w=1000&auto=format&fit=crop',
     description: 'Iconic vivid blue-red lipstick with intense color payoff and non-drying retro matte finish.',
     category: 'Cosmetics',
     brand: 'MAC',
@@ -130,7 +130,7 @@ export const curatedProducts = [
   {
     _id: 'cosm-303',
     name: 'Real Techniques Professional Makeup Brush Set (5 Pcs)',
-    image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1000&auto=format&fit=crop',
     description: 'UltraPlush cruelty-free synthetic bristles for seamless apply of foundation and blush.',
     category: 'Cosmetics',
     brand: 'Real Techniques',
@@ -145,7 +145,7 @@ export const curatedProducts = [
   {
     _id: 'cosm-304',
     name: "L'Oreal Paris True Match Liquid Foundation",
-    image: 'https://images.unsplash.com/photo-1631214524020-3c69b7cce811?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-AHwGdet6UJI?q=80&w=1000&auto=format&fit=crop',
     description: "Buildable coverage foundation matched to skin's unique tone for a natural, skin-like finish.",
     category: 'Cosmetics',
     brand: "L'Oreal",
@@ -160,7 +160,7 @@ export const curatedProducts = [
   {
     _id: 'cosm-305',
     name: 'Charlotte Tilbury Magic Cream Moisturiser (50ml)',
-    image: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-tWng4d9Njxo?q=80&w=1000&auto=format&fit=crop',
     description: 'Luxury anti-aging moisturiser with 8-hour hydration, hyaluronic acid & vitamins C and E.',
     category: 'Cosmetics',
     brand: 'Charlotte Tilbury',
@@ -175,7 +175,7 @@ export const curatedProducts = [
   {
     _id: 'cosm-306',
     name: 'Maybelline Sky High Waterproof Mascara',
-    image: 'https://images.unsplash.com/photo-1512207736890-6ffed8a84e8d?q=80&w=800&auto=format&fit=crop',
+    image: '/images/maybelline_mascara.png',
     description: 'Flexible wand and buildable formula for sky-high defined lashes with all-day waterproof wear.',
     category: 'Cosmetics',
     brand: 'Maybelline',
@@ -190,7 +190,7 @@ export const curatedProducts = [
   {
     _id: 'cosm-307',
     name: 'Neutrogena Hydro Boost Water Gel SPF 25 (50ml)',
-    image: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-0oB1h0MA_ZA?q=80&w=1000&auto=format&fit=crop',
     description: 'Lightweight oil-free gel with hyaluronic acid for intense 24hr hydration and SPF protection.',
     category: 'Cosmetics',
     brand: 'Neutrogena',
@@ -209,7 +209,7 @@ export const curatedProducts = [
   {
     _id: 'cloth-401',
     name: "Levi's Classic Trucker Denim Jacket",
-    image: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-DAFBZYTizY4?q=80&w=1000&auto=format&fit=crop',
     description: 'The original denim jacket since 1967. 100% heavy cotton denim with point collar.',
     category: 'Clothes',
     brand: "Levi's",
@@ -224,7 +224,7 @@ export const curatedProducts = [
   {
     _id: 'cloth-402',
     name: 'Ralph Lauren Essential Oxford Cotton Shirt',
-    image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-YfJWOX3bZbM?q=80&w=1000&auto=format&fit=crop',
     description: 'Tailored fit button-down oxford shirt crafted from breathable long-staple cotton.',
     category: 'Clothes',
     brand: 'Ralph Lauren',
@@ -239,7 +239,7 @@ export const curatedProducts = [
   {
     _id: 'cloth-403',
     name: 'Tommy Hilfiger Slim Fit Linen Casual Shirt',
-    image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-IYqihX3WG-o?q=80&w=1000&auto=format&fit=crop',
     description: 'Lightweight pure linen shirt perfect for summer and casual weekend wear.',
     category: 'Clothes',
     brand: 'Tommy Hilfiger',
@@ -254,7 +254,7 @@ export const curatedProducts = [
   {
     _id: 'cloth-404',
     name: "Levi's 511 Slim Fit Men's Jeans",
-    image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-YPKUM8hD1-4?q=80&w=1000&auto=format&fit=crop',
     description: 'Classic slim fit jeans in authentic stretch denim for all-day comfort and style.',
     category: 'Clothes',
     brand: "Levi's",
@@ -269,7 +269,7 @@ export const curatedProducts = [
   {
     _id: 'cloth-405',
     name: 'Zara Premium Wool Blend Overcoat',
-    image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-CNfL-6ryEMg?q=80&w=1000&auto=format&fit=crop',
     description: 'Luxurious wool-blend double-breasted long coat for cold weather elegance.',
     category: 'Clothes',
     brand: 'Zara',
@@ -284,7 +284,7 @@ export const curatedProducts = [
   {
     _id: 'cloth-406',
     name: 'H&M Regular Fit Crewneck Sweatshirt',
-    image: 'https://images.unsplash.com/photo-1556821840-3a63f15732ce?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-cDOzkJpCR5E?q=80&w=1000&auto=format&fit=crop',
     description: 'Soft cotton-blend crewneck sweatshirt with brushed inside for warmth and everyday comfort.',
     category: 'Clothes',
     brand: 'H&M',
@@ -299,7 +299,7 @@ export const curatedProducts = [
   {
     _id: 'cloth-407',
     name: 'Nike Dri-FIT Training T-Shirt',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-U_jRbLlm-Ws?q=80&w=1000&auto=format&fit=crop',
     description: 'Sweat-wicking Dri-FIT technology keeps you dry and comfortable during intense workouts.',
     category: 'Clothes',
     brand: 'Nike',
@@ -314,7 +314,7 @@ export const curatedProducts = [
   {
     _id: 'cloth-408',
     name: 'Adidas Tiro Track Pants',
-    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-DhMfJIr82_c?q=80&w=1000&auto=format&fit=crop',
     description: 'Classic slim-fit track pants with two side pockets and iconic three-stripe design.',
     category: 'Clothes',
     brand: 'Adidas',
@@ -333,7 +333,7 @@ export const curatedProducts = [
   {
     _id: 'acc-501',
     name: 'Ray-Ban Wayfarer Classic Polarized Sunglasses',
-    image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-D3n859qG03U?q=80&w=1000&auto=format&fit=crop',
     description: 'Iconic crystal green G-15 polarized lenses with 100% UV protection and durable black frame.',
     category: 'Accessories',
     brand: 'Ray-Ban',
@@ -348,7 +348,7 @@ export const curatedProducts = [
   {
     _id: 'acc-502',
     name: 'Tommy Hilfiger Reversible Genuine Leather Belt',
-    image: 'https://images.unsplash.com/photo-1624222247344-550fb60583dc?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-b9SVqfaL5z4?q=80&w=1000&auto=format&fit=crop',
     description: 'Versatile black and brown reversible leather belt with polished silver harness buckle.',
     category: 'Accessories',
     brand: 'Tommy Hilfiger',
@@ -363,7 +363,7 @@ export const curatedProducts = [
   {
     _id: 'acc-503',
     name: 'Fossil RFID Blocking Leather Bifold Wallet',
-    image: 'https://images.unsplash.com/photo-1627123424574-724758594e93?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-R7Wsja_FEBI?q=80&w=1000&auto=format&fit=crop',
     description: 'Handcrafted genuine leather wallet with RFID protection and multiple card slots.',
     category: 'Accessories',
     brand: 'Fossil',
@@ -378,7 +378,7 @@ export const curatedProducts = [
   {
     _id: 'acc-504',
     name: "Hermès Silk Twill Scarf (90x90cm)",
-    image: 'https://images.unsplash.com/photo-1601924994987-69e26d50dc26?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-2vkd36Fx1rI?q=80&w=1000&auto=format&fit=crop',
     description: 'Iconic hand-rolled edge silk scarf with limited-edition artistic print. A timeless luxury gift.',
     category: 'Accessories',
     brand: 'Hermès',
@@ -393,7 +393,7 @@ export const curatedProducts = [
   {
     _id: 'acc-505',
     name: 'Gucci GG Supreme Canvas Crossbody Bag',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-zsJH4hGJOsU?q=80&w=1000&auto=format&fit=crop',
     description: 'Premium GG Supreme canvas bag with leather trim and iconic double G hardware.',
     category: 'Accessories',
     brand: 'Gucci',
@@ -408,7 +408,7 @@ export const curatedProducts = [
   {
     _id: 'acc-506',
     name: 'Oakley Holbrook Prizm Sports Sunglasses',
-    image: 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-V699-Zc5XYg?q=80&w=1000&auto=format&fit=crop',
     description: 'Prizm lens technology for enhanced color and contrast during outdoor sports.',
     category: 'Accessories',
     brand: 'Oakley',
@@ -423,7 +423,7 @@ export const curatedProducts = [
   {
     _id: 'acc-507',
     name: 'Michael Kors Jet Set Travel Tote Bag',
-    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-UDwLAg1psqY?q=80&w=1000&auto=format&fit=crop',
     description: 'Spacious signature logo tote with zip-top closure, multiple interior pockets and crossbody strap.',
     category: 'Accessories',
     brand: 'Michael Kors',
@@ -472,7 +472,7 @@ export const curatedProducts = [
   {
     _id: 'shoe-603',
     name: 'Adidas Ultraboost 23 Running Shoes',
-    image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-zuo1zb6mEcY?q=80&w=1000&auto=format&fit=crop',
     description: 'Linear Energy Push & Boost midsole for a responsive, energized run.',
     category: 'Shoes',
     brand: 'Adidas',
@@ -487,7 +487,7 @@ export const curatedProducts = [
   {
     _id: 'shoe-604',
     name: "Puma Velocity Nitro Men's Running Shoes",
-    image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-NUoPWImmjCU?q=80&w=1000&auto=format&fit=crop',
     description: 'Nitrogen-infused foam cushioning for superior performance running.',
     category: 'Shoes',
     brand: 'Puma',
@@ -502,7 +502,7 @@ export const curatedProducts = [
   {
     _id: 'shoe-605',
     name: 'Converse Chuck Taylor All Star High Top Sneakers',
-    image: 'https://images.unsplash.com/photo-1463100099107-aa0980c362e6?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-mepfMeEzbF8?q=80&w=1000&auto=format&fit=crop',
     description: 'Iconic canvas high-top sneakers with medial eyelets and signature star patch.',
     category: 'Shoes',
     brand: 'Converse',
@@ -517,7 +517,7 @@ export const curatedProducts = [
   {
     _id: 'shoe-606',
     name: 'Timberland Premium 6-Inch Waterproof Boots',
-    image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-9jI4bXu6L-E?q=80&w=1000&auto=format&fit=crop',
     description: 'Iconic waterproof nubuck leather boots with seam-sealed construction and lug outsole.',
     category: 'Shoes',
     brand: 'Timberland',
@@ -536,7 +536,7 @@ export const curatedProducts = [
   {
     _id: 'elec-701',
     name: 'Sony WH-1000XM5 Wireless Noise Canceling Headphones',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-6k1zD1_SDJ0?q=80&w=1000&auto=format&fit=crop',
     description: 'Magnificent sound clarity with two processors and 8 microphones for world-class ANC.',
     category: 'Electronics',
     brand: 'Sony',
@@ -551,7 +551,7 @@ export const curatedProducts = [
   {
     _id: 'elec-702',
     name: 'Apple iPhone 15 Pro Titanium (256GB)',
-    image: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-o2qIo0kd7x8?q=80&w=1000&auto=format&fit=crop',
     description: 'A17 Pro chip, customizable Action button, aerospace-grade titanium design.',
     category: 'Electronics',
     brand: 'Apple',
@@ -566,7 +566,7 @@ export const curatedProducts = [
   {
     _id: 'elec-703',
     name: 'Samsung Galaxy S24 Ultra 5G (512GB)',
-    image: 'https://images.unsplash.com/photo-1707028169135-26330089dbbc?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-jM_iv3a_zeg?q=80&w=1000&auto=format&fit=crop',
     description: 'Galaxy AI redefines mobile intelligence with built-in S-Pen and 200MP camera.',
     category: 'Electronics',
     brand: 'Samsung',
@@ -596,7 +596,7 @@ export const curatedProducts = [
   {
     _id: 'elec-705',
     name: 'JBL Flip 6 Portable Waterproof Bluetooth Speaker',
-    image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-s-9e7Lck-88?q=80&w=1000&auto=format&fit=crop',
     description: 'IP67-waterproof portable speaker with 12hr battery and powerful JBL Pro Sound.',
     category: 'Electronics',
     brand: 'JBL',
@@ -630,7 +630,7 @@ export const curatedProducts = [
   {
     _id: 'perf-801',
     name: 'Bleu de Chanel Eau de Parfum Spray (100ml)',
-    image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-GOVTETevRm8?q=80&w=1000&auto=format&fit=crop',
     description: 'Captivating woody aromatic fragrance with fresh citrus and amber drydown.',
     category: 'Perfumes',
     brand: 'Chanel',
@@ -645,7 +645,7 @@ export const curatedProducts = [
   {
     _id: 'perf-802',
     name: 'Dior Sauvage Elixir Intense Cologne (60ml)',
-    image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-koPqRl9EWjI?q=80&w=1000&auto=format&fit=crop',
     description: 'Extraordinarily concentrated fragrance steeped in the iconic freshness of Sauvage.',
     category: 'Perfumes',
     brand: 'Dior',
@@ -660,7 +660,7 @@ export const curatedProducts = [
   {
     _id: 'perf-803',
     name: 'YSL Black Opium Eau de Parfum (90ml)',
-    image: 'https://images.unsplash.com/photo-1587017539504-67cfbddac569?q=80&w=800&auto=format&fit=crop',
+    image: '/images/ysl_black_opium.png',
     description: 'Addictive coffee and vanilla gourmand fragrance with sensual white floral notes.',
     category: 'Perfumes',
     brand: 'YSL',
@@ -675,7 +675,7 @@ export const curatedProducts = [
   {
     _id: 'perf-804',
     name: 'Giorgio Armani Acqua di Gio Profondo (75ml)',
-    image: 'https://images.unsplash.com/photo-1615634260167-c8cdede054de?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-tgqnnQfq6C8?q=80&w=1000&auto=format&fit=crop',
     description: 'Deep aquatic marine fragrance inspired by the depths of the Mediterranean Sea.',
     category: 'Perfumes',
     brand: 'Armani',
@@ -690,7 +690,7 @@ export const curatedProducts = [
   {
     _id: 'perf-805',
     name: 'Tom Ford Tobacco Vanille Eau de Parfum (50ml)',
-    image: 'https://images.unsplash.com/photo-1563170351-be82bc888aa4?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-ugUNkng4niA?q=80&w=1000&auto=format&fit=crop',
     description: 'Opulent blend of tobacco leaf, tonka bean, vanilla and cacao. Rich, warm and luxurious.',
     category: 'Perfumes',
     brand: 'Tom Ford',
@@ -724,7 +724,7 @@ export const curatedProducts = [
   {
     _id: 'choc-902',
     name: 'Godiva Artisanal Dark Chocolate Truffles Gift Set (24 pcs)',
-    image: 'https://images.unsplash.com/photo-1511381939415-e44015466834?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-cdY1Pc5wr60?q=80&w=1000&auto=format&fit=crop',
     description: 'Rich 72% cocoa Belgian dark chocolate truffles with velvety ganache center.',
     category: 'Chocolates',
     brand: 'Godiva',
@@ -739,7 +739,7 @@ export const curatedProducts = [
   {
     _id: 'choc-903',
     name: 'Ferrero Rocher Fine Hazelnut Chocolates Box (48 pcs)',
-    image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-y1VwUbAegvo?q=80&w=1000&auto=format&fit=crop',
     description: 'Whole roasted hazelnut in creamy filling, wafer shell, and chopped hazelnuts coating.',
     category: 'Chocolates',
     brand: 'Ferrero',
@@ -754,7 +754,7 @@ export const curatedProducts = [
   {
     _id: 'choc-904',
     name: 'Cadbury Celebrations Assorted Chocolate Gift Pack (281g)',
-    image: 'https://images.unsplash.com/photo-1481391319762-47dff72954d9?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-58OjAE3gf50?q=80&w=1000&auto=format&fit=crop',
     description: 'Assortment of miniature Cadbury favourites — Dairy Milk, 5-Star, Gems, Eclairs.',
     category: 'Chocolates',
     brand: 'Cadbury',
@@ -769,7 +769,7 @@ export const curatedProducts = [
   {
     _id: 'choc-905',
     name: 'Thorntons Classic Collection Gift Box (262g)',
-    image: 'https://images.unsplash.com/photo-1575377222312-dd1a63a51638?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?q=80&w=800&auto=format&fit=crop',
     description: 'Premium selection of toffees, pralines, truffles and caramels in a beautiful keepsake box.',
     category: 'Chocolates',
     brand: 'Thorntons',
