@@ -38,3 +38,5 @@ build/
 Thumbs.db
 .vscode/
 .idea/
+backend/.env
+frontend/.env
