@@ -40,3 +40,4 @@ Thumbs.db
 .idea/
 backend/.env
 frontend/.env
+sync.js
