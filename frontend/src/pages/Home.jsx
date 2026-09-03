@@ -43,6 +43,7 @@ const Home = () => {
 
   const activeCategory = searchParams.get('category') || 'all';
   const searchQuery = searchParams.get('search') || '';
+  const sortQuery = searchParams.get('sort') || '';
 
   // Timer simulation for Best Deals banner
   const [timeLeft, setTimeLeft] = useState({ hours: 7, minutes: 42, seconds: 19 });
@@ -65,18 +66,13 @@ const Home = () => {
       try {
         const { data } = await axios.get('http://localhost:5000/api/products');
         if (Array.isArray(data) && data.length > 0) {
-          // DB products take priority; add curated only if name truly absent
-          const dbNamesLower = new Set(data.map((p) => p.name.toLowerCase().trim()));
-          const extras = curatedProducts.filter(
-            (c) => !dbNamesLower.has(c.name.toLowerCase().trim())
-          );
-          setProducts([...data, ...extras]);
+          setProducts(data);
         } else {
-          setProducts(curatedProducts);
+          setProducts([]);
         }
       } catch (err) {
-        console.warn('API unavailable, using curated dataset:', err.message);
-        setProducts(curatedProducts);
+        console.warn('API unavailable:', err.message);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -105,6 +101,13 @@ const Home = () => {
       (item.tags && item.tags.some((t) => t.toLowerCase().includes(q)));
 
     return matchesCategory && matchesSearch;
+  });
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortQuery === 'price_asc') return a.price - b.price;
+    if (sortQuery === 'price_desc') return b.price - a.price;
+    if (sortQuery === 'rating') return b.rating - a.rating;
+    return 0;
   });
 
   const handleCategoryClick = (catId) => {
@@ -285,7 +288,7 @@ const Home = () => {
 
         {/* Featured Deals Products Preview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {curatedProducts.slice(0, 4).map((dealItem) => (
+          {products.slice(0, 4).map((dealItem) => (
             <ProductCard key={dealItem._id} product={dealItem} />
           ))}
         </div>
@@ -301,7 +304,7 @@ const Home = () => {
             <h2 className="text-2xl font-extrabold text-[#172033] flex items-center space-x-2">
               <span>Trending Products</span>
               <span className="text-xs font-bold text-[#2878D8] bg-[#F4F9FF] border border-[#E5EAF0] px-2.5 py-1 rounded-full">
-                {filteredProducts.length} Items
+                {sortedProducts.length} Items
               </span>
             </h2>
             {(activeCategory !== 'all' || searchQuery) && (
@@ -317,15 +320,36 @@ const Home = () => {
             )}
           </div>
 
-          {/* Reset Filters button */}
-          {(activeCategory !== 'all' || searchQuery) && (
-            <button
-              onClick={handleClearFilters}
-              className="text-xs font-bold text-[#E53935] bg-red-50 hover:bg-red-100 border border-red-200 px-3.5 py-1.5 rounded-xl transition-colors"
+          {/* Filters & Sorting Actions */}
+          <div className="flex items-center space-x-3">
+            <select
+              value={sortQuery}
+              onChange={(e) => {
+                const params = new URLSearchParams(searchParams);
+                if (e.target.value) {
+                  params.set('sort', e.target.value);
+                } else {
+                  params.delete('sort');
+                }
+                setSearchParams(params);
+              }}
+              className="text-xs font-semibold text-[#172033] bg-white border border-[#E5EAF0] px-3 py-1.5 rounded-xl focus:outline-none focus:border-[#2878D8]"
             >
-              Clear All Filters &times;
-            </button>
-          )}
+              <option value="">Sort By: Featured</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="rating">Top Rated</option>
+            </select>
+
+            {(activeCategory !== 'all' || searchQuery || sortQuery) && (
+              <button
+                onClick={handleClearFilters}
+                className="text-xs font-bold text-[#E53935] bg-red-50 hover:bg-red-100 border border-red-200 px-3.5 py-1.5 rounded-xl transition-colors"
+              >
+                Clear All Filters &times;
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Loading State Skeleton */}
@@ -335,10 +359,10 @@ const Home = () => {
               <div key={n} className="h-80 rounded-2xl skeleton border border-[#E5EAF0]"></div>
             ))}
           </div>
-        ) : filteredProducts.length > 0 ? (
+        ) : sortedProducts.length > 0 ? (
           /* Product Grid */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((prod) => (
+            {sortedProducts.map((prod) => (
               <ProductCard key={prod._id || prod.id} product={prod} />
             ))}
           </div>

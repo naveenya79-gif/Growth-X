@@ -26,36 +26,80 @@ const getAiCheckoutRecommendations = async (req, res) => {
       return res.json({ success: true, recommendations: [] });
     }
 
-    // 2. Prepare prompt context
+    // Related category mapping for pre-filtering
+    const COMPLEMENTARY_MAP = {
+      Shoes: ['Shoes'],
+      Clothes: ['Clothes'],
+      Watches: ['Watches'],
+      Cosmetics: ['Cosmetics', 'Perfumes'],
+      Perfumes: ['Perfumes', 'Cosmetics', 'Chocolates'],
+      Chocolates: ['Chocolates', 'Perfumes'],
+      Electronics: ['Electronics'],
+      Accessories: ['Accessories']
+    };
+
+    // Pre-filter catalog to only include relevant candidate products
+    const cartCategories = cartItems.map(item => item.category);
+    const allowableCategories = new Set();
+    cartCategories.forEach(cat => {
+      allowableCategories.add(cat);
+      (COMPLEMENTARY_MAP[cat] || []).forEach(c => allowableCategories.add(c));
+    });
+
+    const candidateProducts = availableProducts.filter(p => allowableCategories.has(p.category));
+
+    // If no candidate products match the cart categories, return empty
+    if (candidateProducts.length === 0) {
+      return res.json({ success: true, recommendations: [] });
+    }
+
+    // 2. Prepare prompt context with candidate products only
     const cartContext = cartItems.map(item => `${item.name} (${item.category}, ${item.brand})`).join(', ');
-    const catalogContext = availableProducts.map(p => `ID: ${p._id} | Name: ${p.name} | Category: ${p.category} | Brand: ${p.brand}`).join('\n');
+    const catalogContext = candidateProducts.map(p => `ID: ${p._id} | Name: ${p.name} | Category: ${p.category} | Brand: ${p.brand}`).join('\n');
 
     const systemPrompt = `You are an expert e-commerce cross-selling AI.
-Your goal is to recommend the best 3 complementary products to add to a user's cart to increase Average Order Value (AOV).
+Your goal is to recommend up to 3 directly related, complementary products to add to a user's cart.
+CRITICAL CONSTRAINT: Recommendations MUST be logically related or complementary to the categories in the cart.
+For example:
+- Cosmetics/Perfumes -> Other cosmetics, perfumes, skincare, or luxury chocolates.
+- Shoes -> Other sneakers, running shoes, or footwear.
+- Clothes -> Jackets, jeans, or shirts.
+- Watches -> Other watches or timepieces.
+- Electronics -> Headphones, keyboards, mice.
+- Chocolates -> Luxury chocolates or perfumes.
+
+DO NOT recommend completely unrelated categories.
+If there are NO logically related products, return an empty array [].
+
 The user currently has these items in their cart:
 ${cartContext}
 
-Here is the available product catalog:
+Here is the candidate product catalog:
 ${catalogContext}
 
-Select exactly 3 product IDs from the catalog that best complement the user's cart. 
-Return the response as a pure JSON array of strings containing ONLY the product IDs. DO NOT wrap the JSON in markdown blocks like \`\`\`json. Just the raw array. Example: ["id1", "id2", "id3"]`;
+Return a pure JSON array of strings containing ONLY the product IDs. Example: ["id1", "id2", "id3"] or []`;
 
-    // 3. Call OpenRouter AI Model
+    // 3. Call OpenRouter AI Model (Gemini 3.8 Flash)
     let recommendedIds = [];
     try {
         const response = await openai.chat.completions.create({
-            model: 'google/gemini-flash-1.5-8b', // Optional: You can change this to any openrouter model
+            model: 'google/gemini-3.8-flash',
+            max_tokens: 250,
+            temperature: 0.2,
             messages: [{ role: 'user', content: systemPrompt }],
         });
 
-        const rawContent = response.choices[0].message.content.trim();
-        const jsonStr = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
-        recommendedIds = JSON.parse(jsonStr);
+        const rawContent = (response.choices[0]?.message?.content || '').trim();
+        const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+            recommendedIds = JSON.parse(jsonMatch[0]);
+        } else {
+            recommendedIds = JSON.parse(rawContent);
+        }
     } catch (aiError) {
-        console.error('AI Processing Error:', aiError);
-        // Fallback to basic if AI fails or formatting fails
-        recommendedIds = availableProducts.slice(0, 3).map(p => p._id.toString());
+        console.error('AI Processing Error:', aiError.message);
+        // Fallback: pick top 3 from candidate products only
+        recommendedIds = candidateProducts.slice(0, 3).map(p => p._id.toString());
     }
 
     // 4. Fetch the full product objects for the chosen IDs

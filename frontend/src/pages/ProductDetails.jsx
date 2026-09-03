@@ -399,37 +399,37 @@ const ProductDetails = () => {
       </div>
 
       {/* Recommendations / Related Products */}
-      <div className="space-y-6">
-        <div className="flex items-center space-x-2 border-b border-[#E5EAF0] pb-4">
-          <h2 className="text-xl font-extrabold text-[#172033]">
-            Frequently Bought Together / Related Add-ons
-          </h2>
-          <span className="text-xs text-[#2878D8] bg-[#E8F3FF] px-2.5 py-0.5 rounded-full font-bold">
-            AI Suggestions
-          </span>
-        </div>
+      {(loadingRecs || recommendations.length > 0) && (
+        <div className="space-y-6">
+          <div className="flex items-center space-x-2 border-b border-[#E5EAF0] pb-4">
+            <h2 className="text-xl font-extrabold text-[#172033]">
+              Frequently Bought Together / Related Add-ons
+            </h2>
+            <span className="text-xs text-[#2878D8] bg-[#E8F3FF] px-2.5 py-0.5 rounded-full font-bold">
+              AI Suggestions
+            </span>
+          </div>
 
-        {loadingRecs ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((n) => (
-              <div key={n} className="h-64 rounded-2xl skeleton border border-[#E5EAF0]"></div>
-            ))}
-          </div>
-        ) : recommendations.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {recommendations.map((item) => (
-              <RecommendationCard
-                key={item._id}
-                item={item}
-                isAdded={!!addedMap[item._id]}
-                onAddToCart={handleAddRecToCart}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-[#667085] text-xs">No additional recommendations found for this item.</p>
-        )}
-      </div>
+          {loadingRecs ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="h-64 rounded-2xl skeleton border border-[#E5EAF0]"></div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {recommendations.map((item) => (
+                <RecommendationCard
+                  key={item._id}
+                  item={item}
+                  isAdded={!!addedMap[item._id]}
+                  onAddToCart={handleAddRecToCart}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
     </div>
   );

@@ -16,6 +16,9 @@ import {
   FaMobileAlt,
   FaSpinner,
   FaRupeeSign,
+  FaRobot,
+  FaTimes,
+  FaPlus,
 } from 'react-icons/fa';
 import { SiRazorpay } from 'react-icons/si';
 
@@ -47,6 +50,7 @@ const Checkout = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [addedMap, setAddedMap] = useState({});
+  const [showAiModal, setShowAiModal] = useState(false);
 
   // Checkout Steps state
   const [step, setStep] = useState(1); // 1: Address, 2: Delivery, 3: Payment
@@ -121,9 +125,14 @@ const Checkout = () => {
   const totalPrice = Number((itemsPrice + shippingPrice + taxPrice).toFixed(2));
 
   // ── Razorpay Payment Handler ─────────────────────────────────────────────
-  const handleRazorpayPayment = async () => {
+  const handleRazorpayPayment = async (activeCartItems = cartItems) => {
     setLoading(true);
     setResult(null);
+
+    const currentItemsPrice = activeCartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
+    const currentShippingPrice = currentItemsPrice > 50 || currentItemsPrice === 0 ? 0 : 9.99;
+    const currentTaxPrice = Number((0.08 * currentItemsPrice).toFixed(2));
+    const currentTotalPrice = Number((currentItemsPrice + currentShippingPrice + currentTaxPrice).toFixed(2));
 
     // 1. Load Razorpay SDK
     const scriptLoaded = await loadRazorpayScript();
@@ -144,11 +153,11 @@ const Checkout = () => {
       // 2. Create Razorpay order on backend
       const { data: orderData } = await axios.post(
         'http://localhost:5000/api/payment/create-order',
-        { amount: totalPrice, currency: 'INR' },
+        { amount: currentTotalPrice, currency: 'INR' },
         config
       );
 
-      const primaryProductId = cartItems[0]?.product || cartItems[0]?._id;
+      const primaryProductId = activeCartItems[0]?.product || activeCartItems[0]?._id;
 
       // Inner helper to dry up verification logic
       const verifyPaymentOnBackend = async (response) => {
@@ -159,8 +168,8 @@ const Checkout = () => {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              orderItems: cartItems,
-              totalAmount: totalPrice,
+              orderItems: activeCartItems,
+              totalAmount: currentTotalPrice,
               shippingAddress,
               paymentMethod: 'razorpay',
             },
@@ -249,9 +258,15 @@ const Checkout = () => {
   };
 
   // ── COD Handler ──────────────────────────────────────────────────────────
-  const handleCODPayment = async () => {
+  const handleCODPayment = async (activeCartItems = cartItems) => {
     setLoading(true);
     setResult(null);
+
+    const currentItemsPrice = activeCartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
+    const currentShippingPrice = currentItemsPrice > 50 || currentItemsPrice === 0 ? 0 : 9.99;
+    const currentTaxPrice = Number((0.08 * currentItemsPrice).toFixed(2));
+    const currentTotalPrice = Number((currentItemsPrice + currentShippingPrice + currentTaxPrice).toFixed(2));
+
     try {
       const config = {
         headers: {
@@ -259,12 +274,12 @@ const Checkout = () => {
           Authorization: `Bearer ${userInfo.token}`,
         },
       };
-      const primaryProductId = cartItems[0]?.product || cartItems[0]?._id;
+      const primaryProductId = activeCartItems[0]?.product || activeCartItems[0]?._id;
       const { data } = await axios.post(
         'http://localhost:5000/api/orders',
         {
-          orderItems: cartItems,
-          totalAmount: totalPrice,
+          orderItems: activeCartItems,
+          totalAmount: currentTotalPrice,
           shippingAddress,
           paymentMethod: 'cod',
         },
@@ -296,12 +311,47 @@ const Checkout = () => {
     }
   };
 
-  const placeOrderHandler = () => {
+  const executeFinalOrder = (currentCartItems = cartItems) => {
     if (paymentMethod === 'cod') {
-      handleCODPayment();
+      handleCODPayment(currentCartItems);
     } else {
-      handleRazorpayPayment();
+      handleRazorpayPayment(currentCartItems);
     }
+  };
+
+  const placeOrderHandler = () => {
+    // If AI recommendations exist and user hasn't added them yet, present the quick AI add-on modal
+    const unaddedRecs = recommendations.filter(
+      (rec) => !cartItems.some((c) => (c.product || c._id) === rec._id)
+    );
+
+    if (unaddedRecs.length > 0) {
+      setShowAiModal(true);
+    } else {
+      executeFinalOrder();
+    }
+  };
+
+  const handleAddAiProductAndOrder = (recItem) => {
+    setShowAiModal(false);
+    // Add to cart directly
+    const stockLimit = recItem.countInStock !== undefined ? recItem.countInStock : 10;
+    const newItem = {
+      ...recItem,
+      product: recItem._id,
+      qty: 1,
+      countInStock: stockLimit,
+    };
+    dispatch(addToCart(newItem));
+
+    // Calculate updated cart and execute order immediately with the added product
+    const updatedCart = [...cartItems, newItem];
+    executeFinalOrder(updatedCart);
+  };
+
+  const handleSkipAndOrder = () => {
+    setShowAiModal(false);
+    executeFinalOrder();
   };
 
   return (
@@ -770,6 +820,97 @@ const Checkout = () => {
               ))}
             </div>
           ) : null}
+        </div>
+      )}
+
+      {/* AI Pre-Order Recommendation Intercept Modal */}
+      {showAiModal && recommendations.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-[#E5EAF0] relative overflow-hidden space-y-6 transform transition-all scale-100">
+            
+            {/* Header Badge & Title */}
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="inline-flex items-center space-x-2 bg-[#E8F3FF] text-[#2878D8] px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">
+                  <FaRobot className="text-sm" />
+                  <span>AI Agent Suggestion</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-[#172033] tracking-tight">
+                  Complete Your Order with an Add-on?
+                </h3>
+                <p className="text-xs text-[#667085]">
+                  Our AI selected these perfectly matched items for what's in your cart. Add one directly or skip to purchase as-is.
+                </p>
+              </div>
+              <button
+                onClick={handleSkipAndOrder}
+                className="text-[#667085] hover:text-[#172033] p-2 rounded-full hover:bg-slate-100 transition-colors"
+                title="Skip and continue"
+              >
+                <FaTimes size={18} />
+              </button>
+            </div>
+
+            {/* Recommended Products Quick Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
+              {recommendations.slice(0, 2).map((rec) => {
+                const price = typeof rec.price === 'number' ? rec.price : parseFloat(rec.price || 0);
+                return (
+                  <div
+                    key={rec._id}
+                    className="p-3.5 rounded-2xl border border-[#E5EAF0] hover:border-[#2878D8] bg-[#F8FAFC] flex flex-col justify-between space-y-3 transition-all"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-16 h-16 rounded-xl bg-white p-1.5 border border-[#E5EAF0] flex-shrink-0 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={rec.image}
+                          alt={rec.name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/100?text=Product';
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[9px] font-extrabold text-[#2878D8] uppercase tracking-wider block">
+                          {rec.category}
+                        </span>
+                        <h4 className="text-xs font-bold text-[#172033] truncate" title={rec.name}>
+                          {rec.name}
+                        </h4>
+                        <span className="text-sm font-black text-[#172033] mt-0.5 block">
+                          ₹{price.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleAddAiProductAndOrder(rec)}
+                      className="w-full bg-[#2878D8] hover:bg-[#1769C2] text-white py-2 px-3 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-1.5"
+                    >
+                      <FaPlus size={11} />
+                      <span>Add &amp; Place Order</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Modal Bottom Actions */}
+            <div className="pt-2 border-t border-[#E5EAF0] flex flex-col sm:flex-row items-center justify-between gap-3">
+              <span className="text-[11px] text-[#667085] text-center sm:text-left">
+                No thanks? You can proceed with your existing items.
+              </span>
+              <button
+                onClick={handleSkipAndOrder}
+                className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-[#172033] px-6 py-2.5 rounded-xl text-xs font-extrabold transition-all"
+              >
+                Skip &amp; Continue Purchase &rarr;
+              </button>
+            </div>
+
+          </div>
         </div>
       )}
 

@@ -156,16 +156,14 @@ const deleteProduct = async (req, res) => {
 };
 
 const COMPLEMENTARY_CATEGORIES = {
-  Shoes: ['Socks', 'Shoe Accessories'],
-  Socks: ['Shoes'],
-  Mobiles: ['Mobile Accessories', 'Electronics'],
-  'Mobile Accessories': ['Mobiles', 'Electronics'],
-  Clothes: ['Clothing Accessories', 'Shoes'],
-  'Clothing Accessories': ['Clothes'],
-  Cosmetics: ['Skincare'],
-  Skincare: ['Cosmetics'],
-  Electronics: ['Mobile Accessories', 'Mobiles'],
-  Watches: ['Clothing Accessories', 'Mobiles']
+  Shoes: ['Shoes'],
+  Clothes: ['Clothes'],
+  Watches: ['Watches'],
+  Electronics: ['Electronics'],
+  Cosmetics: ['Cosmetics', 'Perfumes'],
+  Perfumes: ['Perfumes', 'Cosmetics', 'Chocolates'],
+  Chocolates: ['Chocolates', 'Perfumes'],
+  Accessories: ['Accessories']
 };
 
 // @desc    Get recommendations for a product
@@ -175,10 +173,9 @@ const getProductRecommendations = async (req, res) => {
   try {
     const productId = req.params.id;
 
-    // Find the purchased product
+    // Find the purchased/viewed product
     const purchasedProduct = await Product.findById(productId);
 
-    // If the product does not exist, return a proper 404
     if (!purchasedProduct) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
@@ -186,57 +183,38 @@ const getProductRecommendations = async (req, res) => {
     const category = purchasedProduct.category || '';
     const nameLower = (purchasedProduct.name || '').toLowerCase();
     
-    let complementList = COMPLEMENTARY_CATEGORIES[category] ? [...COMPLEMENTARY_CATEGORIES[category]] : [];
+    let complementList = COMPLEMENTARY_CATEGORIES[category] ? [...COMPLEMENTARY_CATEGORIES[category]] : [category];
     
-    // Keyword based dynamic rules
-    if (nameLower.includes('shoe') || nameLower.includes('sneaker') || category === 'Shoes') {
-      if (!complementList.includes('Socks')) complementList.push('Socks');
-    }
-    if (nameLower.includes('phone') || nameLower.includes('iphone') || nameLower.includes('galaxy') || category === 'Mobiles') {
-      if (!complementList.includes('Mobile Accessories')) complementList.push('Mobile Accessories');
-    }
-    if (nameLower.includes('shirt') || nameLower.includes('jacket') || category === 'Clothes') {
-      if (!complementList.includes('Clothing Accessories')) complementList.push('Clothing Accessories');
-    }
+    // STRICT: Target categories only include directly related categories
+    const targetCategories = Array.from(new Set([category, ...complementList]));
 
-    const targetCategories = [category, ...complementList];
-
-    // Query database for same category OR complementary category OR brand OR tags
+    // Query database strictly for matching categories
     const query = {
       _id: { $ne: purchasedProduct._id },
       status: 'Active',
-      $or: [
-        { category: { $in: targetCategories } },
-        { brand: purchasedProduct.brand }
-      ]
+      countInStock: { $gt: 0 },
+      category: { $in: targetCategories }
     };
-    
-    if (Array.isArray(purchasedProduct.tags) && purchasedProduct.tags.length > 0) {
-      query.$or.push({ tags: { $in: purchasedProduct.tags } });
-    }
 
     let potentialProducts = await Product.find(query).select('name brand category tags price image rating countInStock');
 
-    // Scoring Algorithm
+    // Scoring Algorithm: Rank by relevance
     const scoredProducts = potentialProducts.map(product => {
       let score = 0;
 
-      // Complementary category (e.g. Shoes -> Socks, Mobile -> Mobile Accessories) = +10
-      if (complementList.includes(product.category)) {
-        score += 10;
-      }
-
-      // Same category = +5
+      // Heavy priority for exact same category
       if (product.category === purchasedProduct.category) {
-        score += 5;
+        score += 20;
+      } else if (complementList.includes(product.category)) {
+        score += 8;
       }
       
-      // Same brand = +3
+      // Same brand bonus
       if (purchasedProduct.brand && product.brand === purchasedProduct.brand) {
-        score += 3;
+        score += 5;
       }
 
-      // Each matching tag = +2
+      // Matching tags bonus
       if (Array.isArray(purchasedProduct.tags) && Array.isArray(product.tags)) {
         const matchingTags = purchasedProduct.tags.filter(tag => product.tags.includes(tag));
         score += (matchingTags.length * 2);
@@ -251,20 +229,8 @@ const getProductRecommendations = async (req, res) => {
       return (b.product.rating || 0) - (a.product.rating || 0);
     });
 
-    let recommendations = scoredProducts.slice(0, 4).map(item => item.product);
-
-    // Fallback: If fewer than 4 items found, grab ANY active product
-    if (recommendations.length < 4) {
-      const existingIds = recommendations.map(p => p._id);
-      existingIds.push(purchasedProduct._id);
-      
-      const fallbackProducts = await Product.find({
-        _id: { $nin: existingIds },
-        status: 'Active'
-      }).limit(4 - recommendations.length).select('name brand category tags price image rating countInStock');
-      
-      recommendations = [...recommendations, ...fallbackProducts];
-    }
+    // Strictly limit to top 4 related products — NO unrelated fallback items!
+    const recommendations = scoredProducts.slice(0, 4).map(item => item.product);
 
     res.json({
       success: true,
