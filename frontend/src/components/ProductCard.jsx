@@ -1,28 +1,61 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FaStar, FaHeart, FaRegHeart, FaShoppingCart, FaCheck } from 'react-icons/fa';
-import { toggleWishlist } from '../redux/slices/wishlistSlice';
 import { addToCart } from '../redux/slices/cartSlice';
+import { toggleWishlist } from '../redux/slices/wishlistSlice';
+import {
+  FaStar,
+  FaShoppingCart,
+  FaHeart,
+  FaRegHeart,
+  FaCheck,
+  FaShieldAlt,
+  FaBolt
+} from 'react-icons/fa';
 
 const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
+
   const { wishlistItems } = useSelector((state) => state.wishlist);
   const { cartItems } = useSelector((state) => state.cart);
 
-  const productId = product._id || product.id;
-  const isWishlisted = wishlistItems.some((x) => (x._id || x.product) === productId);
-  const isAddedToCart = cartItems.some((x) => (x._id || x.product) === productId);
+  const isWishlisted = wishlistItems.some(
+    (item) => (item._id || item.product) === (product._id || product.id)
+  );
 
-  // Calculate prices and discount
+  const cartItem = cartItems.find(
+    (item) => (item._id || item.product) === (product._id || product.id)
+  );
+
+  const rating = typeof product.rating === 'number' ? product.rating : 4.5;
+  const numReviews = product.numReviews || 24;
   const currentPrice = typeof product.price === 'number' ? product.price : parseFloat(product.price || 0);
-  const originalPrice = product.originalPrice ? parseFloat(product.originalPrice) : currentPrice * 1.25;
-  const discountPercent = product.discount
-    ? product.discount
-    : Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+  const originalPrice = Math.round(currentPrice * 1.25 * 100) / 100;
+  const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
 
-  const rating = product.rating ? Number(product.rating) : 4.5;
-  const numReviews = product.numReviews ? product.numReviews : Math.floor(Math.random() * 80) + 12;
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const currentQty = cartItem ? cartItem.qty : 0;
+    const stockLimit = product.countInStock !== undefined ? product.countInStock : 10;
+    const newQty = Math.min(currentQty + 1, stockLimit);
+
+    dispatch(
+      addToCart({
+        ...product,
+        product: product._id || product.id,
+        qty: newQty,
+        countInStock: stockLimit,
+      })
+    );
+
+    setIsAddedToCart(true);
+    setTimeout(() => {
+      setIsAddedToCart(false);
+    }, 2000);
+  };
 
   const handleWishlistToggle = (e) => {
     e.preventDefault();
@@ -30,97 +63,92 @@ const ProductCard = ({ product }) => {
     dispatch(toggleWishlist(product));
   };
 
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dispatch(
-      addToCart({
-        ...product,
-        product: productId,
-        qty: 1,
-        countInStock: product.countInStock !== undefined ? product.countInStock : 10,
-      })
-    );
-  };
-
   return (
-    <div className="group ekart-card relative flex flex-col justify-between overflow-hidden bg-white">
-      {/* Discount Tag */}
-      {discountPercent > 0 && (
-        <span className="absolute top-3 left-3 z-10 bg-[#E53935] text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-md shadow-xs tracking-wider">
-          {discountPercent}% OFF
-        </span>
-      )}
+    <div className="product-card-hover group relative bg-white border border-slate-200/80 rounded-3xl overflow-hidden flex flex-col justify-between shadow-sm">
+      
+      {/* Top Media / Thumbnail Section */}
+      <div className="relative aspect-square w-full bg-slate-50/70 p-5 overflow-hidden flex items-center justify-center">
+        
+        {/* Floating Badges */}
+        <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+          {discountPercent > 0 && (
+            <span className="bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm">
+              {discountPercent}% OFF
+            </span>
+          )}
+          {rating >= 4.8 && (
+            <span className="bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-xs flex items-center space-x-1">
+              <FaBolt size={9} />
+              <span>HOT</span>
+            </span>
+          )}
+        </div>
 
-      {/* Wishlist Heart Icon */}
-      <button
-        onClick={handleWishlistToggle}
-        className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-          isWishlisted
-            ? 'bg-red-50 text-[#E53935] border border-red-200'
-            : 'bg-white/80 backdrop-blur-md text-[#667085] hover:text-[#E53935] border border-[#E5EAF0] shadow-xs'
-        }`}
-        title={isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
-      >
-        {isWishlisted ? <FaHeart size={15} /> : <FaRegHeart size={15} />}
-      </button>
+        {/* Wishlist Heart Button */}
+        <button
+          onClick={handleWishlistToggle}
+          className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+            isWishlisted
+              ? 'bg-rose-50 text-rose-600 border border-rose-200 shadow-sm'
+              : 'bg-white/90 backdrop-blur-md text-slate-400 hover:text-rose-500 border border-slate-200 shadow-xs hover:scale-110'
+          }`}
+          title={isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
+        >
+          {isWishlisted ? <FaHeart size={16} /> : <FaRegHeart size={16} />}
+        </button>
 
-      {/* Image Area with Hover Zoom */}
-      <Link to={`/product/${productId}`} className="relative w-full aspect-square bg-[#F4F9FF] overflow-hidden flex items-center justify-center p-4">
-        <img
-          src={product.image || 'https://via.placeholder.com/400x400?text=Product'}
-          alt={product.name}
-          className="w-full h-full object-contain ekart-img-zoom"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=600&auto=format&fit=crop';
-          }}
-        />
-      </Link>
+        {/* Product Image Link */}
+        <Link to={`/product/${product._id || product.id}`} className="w-full h-full flex items-center justify-center">
+          <img
+            src={product.image || 'https://via.placeholder.com/400x400?text=Product'}
+            alt={product.name}
+            className="max-h-full max-w-full object-contain ekart-img-zoom filter drop-shadow-sm"
+            loading="lazy"
+          />
+        </Link>
+      </div>
 
-      {/* Card Content */}
-      <div className="p-4 flex-1 flex flex-col justify-between">
+      {/* Product Content Body */}
+      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
         <div>
-          {/* Category Pill */}
-          <div className="flex items-center justify-between text-[11px] text-[#667085] mb-1.5 font-semibold">
-            <span className="bg-[#F4F9FF] px-2 py-0.5 rounded-md text-[#2878D8] border border-[#E5EAF0] uppercase text-[9px] font-bold">
-              {product.category || 'Featured'}
-            </span>
-            <span className={product.countInStock > 0 ? 'text-[#16A34A]' : 'text-red-500'}>
-              {product.countInStock > 0 ? 'In Stock' : 'Out of Stock'}
-            </span>
+          {/* Category & Brand Pill */}
+          <div className="flex items-center justify-between mb-1.5 text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+            <span className="text-blue-600 font-bold">{product.category || 'Lifestyle'}</span>
+            {product.brand && <span className="truncate max-w-[100px]">{product.brand}</span>}
           </div>
 
           {/* Product Title */}
-          <Link to={`/product/${productId}`}>
-            <h3
-              className="text-sm font-bold text-[#172033] hover:text-[#2878D8] transition-colors line-clamp-2 leading-snug mb-2"
-              title={product.name}
-            >
+          <Link to={`/product/${product._id || product.id}`}>
+            <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug mb-2">
               {product.name}
             </h3>
           </Link>
 
-          {/* Rating */}
+          {/* Rating Badge */}
           <div className="flex items-center space-x-1.5 mb-3">
-            <div className="flex items-center text-amber-400 text-xs">
-              <FaStar />
+            <div className="flex items-center space-x-1 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md text-[11px] font-bold text-amber-700">
+              <FaStar className="text-amber-500" size={10} />
+              <span>{rating.toFixed(1)}</span>
             </div>
-            <span className="text-xs font-bold text-[#172033]">{rating.toFixed(1)}</span>
-            <span className="text-[11px] text-[#667085]">({numReviews})</span>
+            <span className="text-[11px] text-slate-400 font-medium">({numReviews})</span>
+            {product.countInStock > 0 && product.countInStock <= 10 && (
+              <span className="text-[10px] text-rose-500 font-bold ml-auto">
+                Only {product.countInStock} left!
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Price & Add to Cart */}
-        <div className="pt-3 border-t border-[#E5EAF0] flex items-center justify-between gap-2">
+        {/* Price & Action Row */}
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
           <div>
             <div className="flex items-baseline space-x-1.5">
-              <span className="text-lg font-extrabold text-[#172033]">
-                ${currentPrice.toFixed(2)}
+              <span className="text-lg font-black text-slate-900 font-heading">
+                ₹{currentPrice.toFixed(2)}
               </span>
               {originalPrice > currentPrice && (
-                <span className="text-xs text-[#667085] line-through font-medium">
-                  ${originalPrice.toFixed(2)}
+                <span className="text-xs text-slate-400 line-through font-medium">
+                  ₹{originalPrice.toFixed(2)}
                 </span>
               )}
             </div>
@@ -129,12 +157,12 @@ const ProductCard = ({ product }) => {
           <button
             onClick={handleAddToCart}
             disabled={product.countInStock === 0}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs ${
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer ${
               product.countInStock === 0
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                 : isAddedToCart
-                ? 'bg-[#16A34A] text-white hover:bg-green-700'
-                : 'bg-[#2878D8] text-white hover:bg-[#1769C2]'
+                ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 active:scale-95'
             }`}
           >
             {isAddedToCart ? (

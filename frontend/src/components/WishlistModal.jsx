@@ -79,7 +79,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                     </Link>
                     <p className="text-xs text-[#667085] mt-0.5">{item.category}</p>
                     <p className="text-sm font-extrabold text-[#2878D8] mt-1">
-                      ${typeof item.price === 'number' ? item.price.toFixed(2) : item.price}
+                      ₹{typeof item.price === 'number' ? item.price.toFixed(2) : item.price}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">

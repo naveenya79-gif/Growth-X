@@ -269,11 +269,11 @@ const ProductDetails = () => {
             <div className="bg-[#F4F9FF] border border-[#E5EAF0] p-4 rounded-2xl flex items-baseline justify-between">
               <div>
                 <span className="text-3xl font-extrabold text-[#172033]">
-                  ${currentPrice.toFixed(2)}
+                  ₹{currentPrice.toFixed(2)}
                 </span>
                 {originalPrice > currentPrice && (
                   <span className="ml-3 text-sm text-[#667085] line-through font-semibold">
-                    ${originalPrice.toFixed(2)}
+                    ₹{originalPrice.toFixed(2)}
                   </span>
                 )}
               </div>
@@ -523,7 +523,7 @@ const ProductDetails = () => {
                           {rec.name}
                         </h4>
                         <span className="text-sm font-black text-[#172033] mt-0.5 block">
-                          ${price.toFixed(2)}
+                          ₹{price.toFixed(2)}
                         </span>
                       </div>
                     </div>

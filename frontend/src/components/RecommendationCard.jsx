@@ -56,7 +56,7 @@ const RecommendationCard = ({ item, isAdded, onAddToCart }) => {
           <div className="flex items-baseline justify-between">
             <span className="text-[10px] text-[#667085] uppercase font-bold">Add-on Price</span>
             <span className="text-base font-extrabold text-[#2878D8]">
-              ${priceValue.toFixed(2)}
+              ₹{priceValue.toFixed(2)}
             </span>
           </div>
 

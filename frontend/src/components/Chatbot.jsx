@@ -143,34 +143,40 @@ const Chatbot = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 border-2 border-white"
-          title="Open AI Shopping Assistant"
+          className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-700 hover:to-indigo-700 text-white p-4 sm:px-5 sm:py-3.5 rounded-full shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2.5 border-2 border-white/80 cursor-pointer group"
+          title="Open Gemini 3.8 Flash AI Assistant"
         >
-          <FaRobot className="text-2xl animate-bounce" />
-          <span className="font-bold text-sm hidden sm:inline pr-1">AI Assistant</span>
+          <div className="relative">
+            <FaRobot className="text-xl sm:text-2xl group-hover:rotate-12 transition-transform" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-indigo-700 animate-ping"></span>
+          </div>
+          <div className="flex flex-col text-left leading-none hidden sm:flex">
+            <span className="font-extrabold text-xs tracking-wider uppercase">AI Assistant</span>
+            <span className="text-[9px] text-cyan-200 font-bold">Gemini 3.8 Flash</span>
+          </div>
         </button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="w-96 max-w-[92vw] h-[520px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="w-96 max-w-[92vw] h-[540px] bg-white rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-4 flex items-center justify-between shadow-md">
+          <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white p-4.5 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">
-              <div className="bg-white/20 p-2 rounded-xl">
-                <FaRobot className="text-xl" />
+              <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-cyan-300 text-lg shadow-inner">
+                <FaRobot />
               </div>
               <div>
-                <h3 className="font-bold text-sm flex items-center space-x-1">
-                  <span>Growth-X AI Assistant</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <h3 className="font-heading font-extrabold text-sm flex items-center space-x-1.5">
+                  <span>Growth-X AI Shopper</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 </h3>
-                <p className="text-[11px] text-indigo-200">Conversational In-App Checkout</p>
+                <p className="text-[10px] text-cyan-200 font-medium">Powered by Gemini 3.8 Flash</p>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-indigo-200 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
             >
               <FaTimes size={18} />
             </button>
