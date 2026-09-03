@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart, clearCart } from '../redux/slices/cartSlice';
+import { logout } from '../redux/slices/userSlice';
 import RecommendationCard from '../components/RecommendationCard';
 import axios from 'axios';
 import {
@@ -215,12 +216,12 @@ const Checkout = () => {
           amount: orderData.amount,
           currency: orderData.currency,
           name: 'Growth-X Store',
-          description: `Order for ${cartItems.length} item(s)`,
+          description: `Order for ${activeCartItems.length} item(s)`,
           order_id: orderData.orderId,
           prefill: {
-            name: userInfo.name || '',
-            email: userInfo.email || '',
-            contact: userInfo.phone || '',
+            name: userInfo?.name || '',
+            email: userInfo?.email || '',
+            contact: userInfo?.phone || '9999999999',
           },
           theme: {
             color: '#2878D8',
@@ -231,27 +232,48 @@ const Checkout = () => {
           modal: {
             ondismiss: () => {
               setLoading(false);
-              setResult({ success: false, status: 'Cancelled', reason: 'Payment was cancelled by you.' });
+              setResult({ success: false, status: 'Cancelled', reason: 'Payment was cancelled.' });
             },
           },
         };
 
         const rzpInstance = new window.Razorpay(options);
         rzpInstance.on('payment.failed', (response) => {
+          console.error('Razorpay Payment Failed Event:', response);
           setLoading(false);
+          const errorMsg =
+            response?.error?.description ||
+            response?.error?.reason ||
+            response?.error?.source ||
+            'Payment was declined or failed by bank.';
           setResult({
             success: false,
             status: 'Failed',
-            reason: response.error?.description || 'Payment failed',
+            reason: errorMsg,
           });
         });
-        rzpInstance.open();
-      }
-    } catch (error) {
+
+          try {
+            rzpInstance.open();
+          } catch (openErr) {
+            console.error('Error calling rzpInstance.open():', openErr);
+            setLoading(false);
+            setResult({
+              success: false,
+              status: 'Error',
+              reason: 'Could not open Razorpay checkout: ' + openErr.message,
+            });
+          }
+        }
+      } catch (error) {
+      console.error('Razorpay process error:', error);
+      const isAuthError = error.response?.status === 401;
+      const serverMsg = error.response?.data?.message || error.response?.data?.error || error.message;
       setResult({
         success: false,
         status: 'Error',
-        reason: error.response?.data?.message || error.message,
+        isAuthError,
+        reason: isAuthError ? 'Your login session has expired. Please log in again to complete your order.' : (serverMsg || 'Payment initiation failed'),
       });
       setLoading(false);
     }
@@ -454,6 +476,24 @@ const Checkout = () => {
               >
                 Continue Shopping
               </button>
+            ) : result.isAuthError ? (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    dispatch(logout());
+                    navigate('/login?redirect=/checkout');
+                  }}
+                  className="bg-gradient-to-r from-[#2878D8] to-[#1769C2] hover:from-[#1769C2] hover:to-[#0F539B] text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-[#2878D8]/20 transition-all"
+                >
+                  Log In Again
+                </button>
+                <button
+                  onClick={() => setResult(null)}
+                  className="bg-slate-200 hover:bg-slate-300 text-[#172033] px-6 py-3 rounded-xl text-sm font-bold transition-all"
+                >
+                  Dismiss
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => setResult(null)}

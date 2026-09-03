@@ -90,15 +90,21 @@ Return a pure JSON array of strings containing ONLY the product IDs. Example: ["
         });
 
         const rawContent = (response.choices[0]?.message?.content || '').trim();
-        const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-            recommendedIds = JSON.parse(jsonMatch[0]);
+        const idMatches = rawContent.match(/[a-f0-9]{24}/gi);
+        if (idMatches && idMatches.length > 0) {
+            recommendedIds = [...new Set(idMatches)].slice(0, 3);
         } else {
-            recommendedIds = JSON.parse(rawContent);
+            const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+                recommendedIds = JSON.parse(jsonMatch[0]);
+            }
         }
     } catch (aiError) {
         console.error('AI Processing Error:', aiError.message);
-        // Fallback: pick top 3 from candidate products only
+    }
+
+    // If AI did not return valid IDs, fallback to first 3 candidate products
+    if (!recommendedIds || recommendedIds.length === 0) {
         recommendedIds = candidateProducts.slice(0, 3).map(p => p._id.toString());
     }
 
@@ -116,6 +122,147 @@ Return a pure JSON array of strings containing ONLY the product IDs. Example: ["
   }
 };
 
+// @desc    Intelligent AI Chatbot Assistant query with Gemini 3.8 Flash
+// @route   POST /api/products/ai-chat
+// @access  Public
+const handleChatbotQuery = async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query || !query.trim()) {
+      return res.status(400).json({ success: false, message: 'Query cannot be empty' });
+    }
+
+    // 1. Fetch active products from catalog
+    const allProducts = await Product.find({ status: 'Active', countInStock: { $gt: 0 } })
+      .select('_id name category brand description price image rating');
+
+    // 2. Initialize OpenRouter OpenAI client
+    const openai = new OpenAI({
+      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: process.env.OPENROUTER_API_KEY,
+    });
+
+    // Pre-filter catalog by keyword/category to save tokens and avoid truncation
+    const qLower = query.toLowerCase();
+    let relevantProducts = allProducts;
+
+    let candidateFilter = null;
+    if (qLower.includes('shoe') || qLower.includes('sneaker') || qLower.includes('trainer') || qLower.includes('footwear')) {
+      candidateFilter = (p) => p.category === 'Shoes' || (p.name || '').toLowerCase().includes('shoe') || (p.name || '').toLowerCase().includes('sneaker');
+    } else if (qLower.includes('perfume') || qLower.includes('fragrance') || qLower.includes('scent')) {
+      candidateFilter = (p) => p.category === 'Perfumes';
+    } else if (qLower.includes('cosmetic') || qLower.includes('makeup') || qLower.includes('lipstick') || qLower.includes('cream')) {
+      candidateFilter = (p) => p.category === 'Cosmetics';
+    } else if (qLower.includes('chocolate') || qLower.includes('truffle') || qLower.includes('praline')) {
+      candidateFilter = (p) => p.category === 'Chocolates';
+    } else if (qLower.includes('watch') || qLower.includes('chronograph')) {
+      candidateFilter = (p) => p.category === 'Watches';
+    } else if (qLower.includes('cloth') || qLower.includes('shirt') || qLower.includes('jacket') || qLower.includes('jean') || qLower.includes('t-shirt')) {
+      candidateFilter = (p) => p.category === 'Clothes';
+    } else if (qLower.includes('electronic') || qLower.includes('headphone') || qLower.includes('keyboard') || qLower.includes('mouse')) {
+      candidateFilter = (p) => p.category === 'Electronics';
+    }
+
+    if (candidateFilter) {
+      const filtered = allProducts.filter(candidateFilter);
+      if (filtered.length > 0) relevantProducts = filtered;
+    }
+
+    // Provide catalog snapshot to AI
+    const catalogSummary = relevantProducts
+      .map((p) => `ID: ${p._id} | Name: ${p.name} | Category: ${p.category} | Price: ₹${p.price}`)
+      .join('\n');
+
+    const systemPrompt = `You are a shopping assistant for "Growth-X Store".
+User query: "${query}"
+
+Catalog:
+${catalogSummary}
+
+Rules:
+1. If the user mentions a price like "under 2000" or "below 500", match products with price <= specified amount.
+2. Select up to 4 matching product IDs.
+
+Respond with pure JSON only:
+{"productIds": ["id1", "id2"], "message": "Short 1-sentence friendly response"}`;
+
+    let responseMessage = `Here are the best matching items for "${query}":`;
+    let matchingIds = [];
+
+    try {
+      console.log('Sending chatbot prompt to OpenRouter Gemini 3.8 Flash...');
+      const completion = await openai.chat.completions.create({
+        model: 'google/gemini-3.8-flash',
+        max_tokens: 600,
+        temperature: 0.2,
+        messages: [{ role: 'user', content: systemPrompt }],
+      });
+
+      const rawContent = (completion.choices[0]?.message?.content || '').trim();
+      console.log('Chatbot raw AI output:', rawContent);
+
+      // Extract all 24-character hexadecimal MongoDB ObjectIds from rawContent
+      const idMatches = rawContent.match(/[a-f0-9]{24}/gi);
+      if (idMatches && idMatches.length > 0) {
+        matchingIds = [...new Set(idMatches)].slice(0, 4);
+      }
+
+      // Extract message string if possible
+      const msgMatch = rawContent.match(/"message"\s*:\s*"([^"]+)"/);
+      if (msgMatch && msgMatch[1]) {
+        responseMessage = msgMatch[1];
+      }
+    } catch (aiErr) {
+      console.error('Chatbot AI Error, falling back to smart regex:', aiErr.message);
+    }
+
+    // If AI did not return valid matching IDs, apply smart deterministic filter
+    if (matchingIds.length === 0) {
+      const qLower = query.toLowerCase();
+      let maxPrice = Infinity;
+      const priceMatch = qLower.match(/under\s*(?:rs\.?|inr|₹|\$)?\s*(\d+)/i) || qLower.match(/below\s*(?:rs\.?|inr|₹|\$)?\s*(\d+)/i);
+      if (priceMatch && priceMatch[1]) {
+        maxPrice = parseFloat(priceMatch[1]);
+      }
+
+      const filtered = allProducts.filter((p) => {
+        const cat = (p.category || '').toLowerCase();
+        const name = (p.name || '').toLowerCase();
+        const price = Number(p.price || 0);
+
+        let matchesCat = true;
+        if (qLower.includes('shoe') || qLower.includes('sneaker')) matchesCat = cat.includes('shoe') || name.includes('shoe') || name.includes('sneaker');
+        else if (qLower.includes('perfume') || qLower.includes('fragrance')) matchesCat = cat.includes('perfume') || name.includes('parfum') || name.includes('perfume');
+        else if (qLower.includes('cosmetic') || qLower.includes('lipstick') || qLower.includes('makeup')) matchesCat = cat.includes('cosmetic');
+        else if (qLower.includes('chocolate')) matchesCat = cat.includes('chocolate');
+        else if (qLower.includes('cloth') || qLower.includes('shirt') || qLower.includes('jacket') || qLower.includes('jean')) matchesCat = cat.includes('cloth');
+        else if (qLower.includes('watch')) matchesCat = cat.includes('watch');
+        else if (qLower.includes('electronic') || qLower.includes('headphone') || qLower.includes('mouse') || qLower.includes('keyboard')) matchesCat = cat.includes('electronic');
+
+        return matchesCat && price <= maxPrice;
+      });
+
+      matchingIds = filtered.slice(0, 4).map((p) => p._id.toString());
+      if (maxPrice !== Infinity) {
+        responseMessage = `Here are the top options under ₹${maxPrice}:`;
+      }
+    }
+
+    const matchedProducts = await Product.find({ _id: { $in: matchingIds } })
+      .select('name brand category price image rating countInStock');
+
+    res.json({
+      success: true,
+      message: responseMessage,
+      products: matchedProducts,
+    });
+  } catch (error) {
+    console.error('Chatbot Controller Error:', error);
+    res.status(500).json({ success: false, message: 'Server error processing chatbot query' });
+  }
+};
+
 module.exports = {
-  getAiCheckoutRecommendations
+  getAiCheckoutRecommendations,
+  handleChatbotQuery,
 };

@@ -39,9 +39,9 @@ const Chatbot = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e?.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || loading) return;
 
     const userText = input.trim();
     const newMessages = [...messages, { sender: 'user', text: userText }];
@@ -49,75 +49,69 @@ const Chatbot = () => {
     setInput('');
     setLoading(true);
 
-    setTimeout(() => {
-      const queryLower = userText.toLowerCase();
-      const isBuyIntent = queryLower.includes('buy') || queryLower.includes('purchase') || queryLower.includes('want') || queryLower.includes('order') || queryLower.includes('shoe') || queryLower.includes('mobile') || queryLower.includes('cloth') || queryLower.includes('cosmetic');
-
-      // Extract price constraint if user mentioned "under X" or "$X"
-      let maxPrice = Infinity;
-      const priceMatch = queryLower.match(/under\s*\$?(\d+)/) || queryLower.match(/\$?(\d+)\s*dollars/);
-      if (priceMatch && priceMatch[1]) {
-        maxPrice = parseFloat(priceMatch[1]);
-      }
-
-      // Filter matching products
-      let matches = catalog.filter((product) => {
-        const name = (product.name || '').toLowerCase();
-        const category = (product.category || '').toLowerCase();
-        const desc = (product.description || '').toLowerCase();
-        const tags = (product.tags || []).map((t) => t.toLowerCase());
-
-        const matchesQuery =
-          name.includes(queryLower) ||
-          category.includes(queryLower) ||
-          desc.includes(queryLower) ||
-          tags.some((t) => t.includes(queryLower)) ||
-          // Keyword rules
-          (queryLower.includes('shoe') && (category.includes('shoe') || name.includes('shoe') || name.includes('sneaker'))) ||
-          (queryLower.includes('phone') && (category.includes('mobile') || name.includes('iphone') || name.includes('galaxy'))) ||
-          (queryLower.includes('mobile') && (category.includes('mobile') || name.includes('iphone') || name.includes('galaxy'))) ||
-          (queryLower.includes('cloth') && (category.includes('cloth') || name.includes('jacket') || name.includes('shirt'))) ||
-          (queryLower.includes('jacket') && name.includes('jacket')) ||
-          (queryLower.includes('cosmetic') && (category.includes('cosmetic') || category.includes('skincare'))) ||
-          (queryLower.includes('cream') || queryLower.includes('serum') || queryLower.includes('skincare'));
-
-        const matchesPrice = (product.price || 0) <= maxPrice;
-
-        return matchesQuery && matchesPrice;
+    try {
+      // Call Backend Gemini 3.8 Flash AI endpoint
+      const { data } = await axios.post('http://localhost:5000/api/products/ai-chat', {
+        query: userText,
       });
 
-      // If no strict match, fallback to top catalog products
-      if (matches.length === 0) {
-        matches = catalog.slice(0, 3);
-      } else {
-        matches = matches.slice(0, 4);
-      }
-
-      const topMatch = matches[0];
-      let responseText = `Here are the best matching items for "${userText}":`;
-
-      if (topMatch && isBuyIntent) {
-        responseText = `🚀 Redirecting you to buy ${topMatch.name}...`;
-        
-        // Auto-redirect to top match product details after 1 second
-        setTimeout(() => {
-          if (topMatch._id) {
-            navigate(`/product/${topMatch._id}`);
-            setIsOpen(false);
-          }
-        }, 1200);
-      }
+      const responseText = data.message || `Here are the matching items for "${userText}":`;
+      const matches = data.products || [];
 
       setMessages((prev) => [
         ...prev,
         {
           sender: 'ai',
           text: responseText,
-          products: matches
-        }
+          products: matches,
+        },
       ]);
+    } catch (err) {
+      console.error('Chatbot API error, falling back to catalog search:', err);
+
+      // Graceful client-side fallback
+      const queryLower = userText.toLowerCase();
+      let maxPrice = Infinity;
+      const priceMatch = queryLower.match(/under\s*(?:rs\.?|inr|₹|\$)?\s*(\d+)/i) || queryLower.match(/below\s*(?:rs\.?|inr|₹|\$)?\s*(\d+)/i);
+      if (priceMatch && priceMatch[1]) {
+        maxPrice = parseFloat(priceMatch[1]);
+      }
+
+      let matches = catalog.filter((product) => {
+        const name = (product.name || '').toLowerCase();
+        const category = (product.category || '').toLowerCase();
+        const desc = (product.description || '').toLowerCase();
+        const price = Number(product.price || 0);
+
+        let matchesCat = true;
+        if (queryLower.includes('shoe') || queryLower.includes('sneaker')) matchesCat = category.includes('shoe') || name.includes('shoe') || name.includes('sneaker');
+        else if (queryLower.includes('perfume')) matchesCat = category.includes('perfume') || name.includes('parfum');
+        else if (queryLower.includes('cosmetic') || queryLower.includes('lipstick')) matchesCat = category.includes('cosmetic');
+        else if (queryLower.includes('chocolate')) matchesCat = category.includes('chocolate');
+        else if (queryLower.includes('cloth') || queryLower.includes('shirt') || queryLower.includes('jacket')) matchesCat = category.includes('cloth');
+        else if (queryLower.includes('watch')) matchesCat = category.includes('watch');
+        else if (queryLower.includes('electronic')) matchesCat = category.includes('electronic');
+
+        return matchesCat && price <= maxPrice;
+      });
+
+      if (matches.length === 0) {
+        matches = catalog.slice(0, 3);
+      } else {
+        matches = matches.slice(0, 4);
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: matches.length > 0 ? `Here are the best matching items for "${userText}":` : `Sorry, I couldn't find products matching "${userText}".`,
+          products: matches,
+        },
+      ]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const handleAddToCart = (product) => {
@@ -215,7 +209,7 @@ const Chatbot = () => {
                         <div className="flex-1 min-w-0">
                           <h4 className="text-xs font-bold text-gray-900 truncate">{prod.name}</h4>
                           <p className="text-xs text-indigo-600 font-extrabold mt-0.5">
-                            ${typeof prod.price === 'number' ? prod.price.toFixed(2) : prod.price}
+                            ₹{typeof prod.price === 'number' ? prod.price.toFixed(2) : prod.price}
                           </p>
                         </div>
                         <div className="flex items-center space-x-1">

@@ -16,7 +16,10 @@ import {
   FaUndo,
   FaCheckCircle,
   FaArrowLeft,
-  FaBolt
+  FaBolt,
+  FaRobot,
+  FaTimes,
+  FaPlus
 } from 'react-icons/fa';
 
 const ProductDetails = () => {
@@ -74,8 +77,40 @@ const ProductDetails = () => {
     navigate('/cart');
   };
 
+  const [showBuyNowAiModal, setShowBuyNowAiModal] = useState(false);
+
   const buyNowHandler = () => {
+    // Add primary product to cart first
     dispatch(addToCart({ ...product, product: product._id || id, qty: Number(qty) }));
+
+    // Check if there are unadded recommendations
+    const unaddedRecs = recommendations.filter(
+      (rec) => rec._id !== (product._id || id) && !cartItems.some((c) => (c.product || c._id) === rec._id)
+    );
+
+    if (unaddedRecs.length > 0) {
+      setShowBuyNowAiModal(true);
+    } else {
+      navigate('/checkout');
+    }
+  };
+
+  const handleAddAiAndBuy = (recItem) => {
+    setShowBuyNowAiModal(false);
+    const stockLimit = recItem.countInStock !== undefined ? recItem.countInStock : 10;
+    dispatch(
+      addToCart({
+        ...recItem,
+        product: recItem._id,
+        qty: 1,
+        countInStock: stockLimit,
+      })
+    );
+    navigate('/checkout');
+  };
+
+  const handleSkipAndBuy = () => {
+    setShowBuyNowAiModal(false);
     navigate('/checkout');
   };
 
@@ -428,6 +463,97 @@ const ProductDetails = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Buy Now AI Add-on Intercept Modal */}
+      {showBuyNowAiModal && recommendations.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-[#E5EAF0] relative overflow-hidden space-y-6 transform transition-all scale-100">
+            
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="inline-flex items-center space-x-2 bg-[#E8F3FF] text-[#2878D8] px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">
+                  <FaRobot className="text-sm" />
+                  <span>AI Recommended Add-on</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-[#172033] tracking-tight">
+                  Frequently Bought Together
+                </h3>
+                <p className="text-xs text-[#667085]">
+                  Customers who bought this {product.category || 'item'} also added these. Add one to your order or skip to purchase now!
+                </p>
+              </div>
+              <button
+                onClick={handleSkipAndBuy}
+                className="text-[#667085] hover:text-[#172033] p-2 rounded-full hover:bg-slate-100 transition-colors"
+                title="Skip and continue"
+              >
+                <FaTimes size={18} />
+              </button>
+            </div>
+
+            {/* Product Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
+              {recommendations.slice(0, 2).map((rec) => {
+                const price = typeof rec.price === 'number' ? rec.price : parseFloat(rec.price || 0);
+                return (
+                  <div
+                    key={rec._id}
+                    className="p-3.5 rounded-2xl border border-[#E5EAF0] hover:border-[#2878D8] bg-[#F8FAFC] flex flex-col justify-between space-y-3 transition-all"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-16 h-16 rounded-xl bg-white p-1.5 border border-[#E5EAF0] flex-shrink-0 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={rec.image}
+                          alt={rec.name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/100?text=Product';
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[9px] font-extrabold text-[#2878D8] uppercase tracking-wider block">
+                          {rec.category}
+                        </span>
+                        <h4 className="text-xs font-bold text-[#172033] truncate" title={rec.name}>
+                          {rec.name}
+                        </h4>
+                        <span className="text-sm font-black text-[#172033] mt-0.5 block">
+                          ${price.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleAddAiAndBuy(rec)}
+                      className="w-full bg-[#2878D8] hover:bg-[#1769C2] text-white py-2 px-3 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-1.5"
+                    >
+                      <FaPlus size={11} />
+                      <span>Add &amp; Proceed to Checkout</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="pt-2 border-t border-[#E5EAF0] flex flex-col sm:flex-row items-center justify-between gap-3">
+              <span className="text-[11px] text-[#667085] text-center sm:text-left">
+                Only want {product.name || 'this item'}?
+              </span>
+              <button
+                onClick={handleSkipAndBuy}
+                className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-[#172033] px-6 py-2.5 rounded-xl text-xs font-extrabold transition-all"
+              >
+                Skip &amp; Continue &rarr;
+              </button>
+            </div>
+
+          </div>
         </div>
       )}
 
